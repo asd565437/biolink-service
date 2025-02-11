@@ -55,13 +55,6 @@ app.use('/api', routes);
 const staticPath = path.join(__dirname, '../client/build');
 app.use(express.static(staticPath));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(staticPath, 'index.html'), (err) => {
-    if (err) {
-      res.status(500).send("Error loading React app.");
-    }
-  });
-});
 
 // 启动 HTTP 服务器（用于 WebSocket）
 const server = http.createServer(app);

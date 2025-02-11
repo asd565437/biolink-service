@@ -51,11 +51,6 @@ app.get('/get-cookie', (req, res) => {
 // 路由配置
 app.use('/api', routes);
 
-// React 静态文件路径（确保正确）
-const staticPath = path.join(__dirname, '../client/build');
-app.use(express.static(staticPath));
-
-
 // 启动 HTTP 服务器（用于 WebSocket）
 const server = http.createServer(app);
 

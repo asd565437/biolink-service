@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 const { getFirestore,getCountFromServer, collection, query, where, getDocs, doc, setDoc, getDoc } = require("firebase/firestore");
 const { db, firebaseConfig } = require("./firebase.js"); // 确保路径正确
 const { initializeApp } = require("firebase/app");

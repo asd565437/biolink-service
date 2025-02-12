@@ -7,11 +7,11 @@ const { getFirestore } = require("firebase/firestore");
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBEBOvR5IsLUspq0AGF12wQWXA69-XpBxI", // 你的 API 金鑰
-  authDomain: "biolink-auth.firebaseapp.com", // 你的專案 ID.firebaseapp.com
-  projectId: "biolink-auth", // 你的專案 ID
-  messagingSenderId: "507593072695", // 你的訊息發送者 ID
-  appId: "1:507593072695:web:d6e8d53729083bc7d91fb2" // 你的應用程式 ID
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID
 };
 
 // Initialize Firebase

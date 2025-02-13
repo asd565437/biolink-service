@@ -1,184 +1,169 @@
-import "./css/Register.css";
-import React, { useState } from 'react';
-import { auth, googleProvider } from './firebase';
-import { signInWithPopup } from 'firebase/auth';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from "axios";
+const express = require("express");
+const bcrypt = require('bcryptjs');
+const { getFirestore, getCountFromServer, collection, query, where, getDocs, doc, setDoc, getDoc } = require("firebase/firestore");
+const { db, firebaseConfig } = require("./firebase.js");
+const { initializeApp } = require("firebase/app");
 
-const apiUrl = process.env.REACT_APP_API_URL;
+const router = express.Router();
+const app = initializeApp(firebaseConfig);
+const firestoreInstance = getFirestore(app);
 
-function Register() {
-    const navigate = useNavigate();
-    const [account, setAccount] = useState("");
-    const [password, setPassword] = useState("");
-    const [nickName, setNickName] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isVisible, setIsVisible] = useState([false, false]);
+//
+// 📌 用户注册
+//
+router.post('/register', async (req, res) => {
+  try {
+    const { account, password, nickName, googleLogin, photoUrl } = req.body;
+    
+    if (!googleLogin && (!account || !password || !nickName)) {
+      return res.status(400).json({ error: '請填寫所有必填欄位' });
+    }
 
-    // 切換密碼可見性
-    const toggleVisibility = (index) => {
-        setIsVisible(prev => prev.map((item, i) => (i === index ? !item : item)));
-    };
+    // 检查用户是否已存在
+    const userQuery = query(collection(firestoreInstance, "player"), where("account", "==", account));
+    const userSnap = await getDocs(userQuery);
+    
+    if (!userSnap.empty) {
+      return res.status(400).json({ error: '帳號已存在' });
+    }
 
-    // 處理註冊成功的跳轉
-    const handleNavigate = (id) => {
-        navigate('/photo', { state: { id } });
-    };
+    // 生成用户 ID
+    const snapshot = await getCountFromServer(collection(firestoreInstance, "player"));
+    const user_id = `biolink${snapshot.data().count + 1}`;
 
-    const handleSuccess = () => {
-        navigate('/world');
-    };
+    // 处理密码（Google 登录不哈希密码）
+    const hashedPassword = googleLogin ? null : await bcrypt.hash(password, 10);
 
-    // 處理 Google 註冊
-    const handleGoogleLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-            const response = await axios.post(`${apiUrl}/api/register`, {
-                account: user.email,
-                nickName: user.displayName,
-                password: "google_generated_password",
-                googleLogin: true,
-                photoUrl: user.photoURL
-            }, {
-                headers: { "Content-Type": "application/json" }
-            });
+    // 存入 Firestore
+    await setDoc(doc(firestoreInstance, "player", user_id), {
+      id: user_id,
+      account,
+      nickname: nickName,
+      password: hashedPassword,
+      bio_count: 0,
+      photoURL: photoUrl || null,
+      googleLogin
+    });
 
-            console.log("伺服器回應:", response.data);
+    res.status(201).json({ message: '註冊成功', user: { id: user_id } });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-            if (response.status === 200) {
-                alert("註冊成功!");
-                handleSuccess();
-            } else {
-                console.error("註冊失敗：", response.data.error);
-                alert("註冊失敗：" + response.data.error);
-            }
-        } catch (error) {
-            console.error("Google 註冊錯誤：", error.response?.data || error.message);
-            const errorMessage = error.response?.data?.error || error.response?.data || error.message || "未知錯誤";
-            alert("Google 註冊錯誤：" + errorMessage);
-        }
-    };
+//
+// 📌 用户登录
+//
+router.post("/login", async (req, res) => {
+  try {
+    const { account, password, googleLogin } = req.body;
 
-    // 處理一般註冊
-    const handleRegister = async () => {
-        if (!account || !password || !nickName || !confirmPassword) {
-            alert("請填寫所有必填欄位！");
-            return;
-        }
+    if (!googleLogin && (!account || !password)) {
+      return res.status(400).json({ error: "請輸入帳號密碼" });
+    }
 
-        if (password !== confirmPassword) {
-            alert("密碼與確認密碼不一致！");
-            return;
-        }
+    // 查询用户
+    const usersSnap = await getDocs(query(collection(firestoreInstance, "player"), where("account", "==", account)));
 
-        try {
-            console.log("發送註冊請求", { account, nickName, password, googleLogin: false });
+    if (usersSnap.empty) {
+      return res.status(404).json({ error: "帳號不存在" });
+    }
 
-            const response = await axios.post(`${apiUrl}/api/register`, {
-                account,
-                nickName,
-                password,
-                googleLogin: false
-            }, {
-                headers: { "Content-Type": "application/json" }
-            });
+    const user = usersSnap.docs[0].data();
 
-            if (response.status === 200) {
-                alert("註冊成功!");
-                handleNavigate(response.data.user.id);
-            } else {
-                console.error("註冊失敗：", response.data.error);
-                alert("註冊失敗：" + response.data.error);
-            }
-        } catch (error) {
-            console.error("網路錯誤：", error.response?.data || error.message);
-            alert("網路錯誤，請稍後再試！");
-        }
-    };
+    // 处理密码验证
+    if (!googleLogin) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "密碼錯誤" });
+      }
+    }
 
-    return (
-        <div className="login-container">
-            <Link to="/">
-                <div className="login-logo">
-                    <img src="/logo_small.svg" alt="Logo" />
-                </div>
-            </Link>
+    res.status(200).json({ message: "登入成功", user: { id: user.id, account: user.account, nickname: user.nickname } });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
-            <div className="login_text">
-                <img src="/register_title.svg" alt="Logo" />
-            </div>
+//
+// 📌 获取问题信息
+//
+router.post('/question', async (req, res) => {
+  try {
+    const { question_id } = req.body;
 
-            <div className="login-box-register">
-                <div className="input-container-register">
-                    <input
-                        type="text"
-                        placeholder="暱稱"
-                        value={nickName}
-                        onChange={(e) => setNickName(e.target.value)}
-                    />
-                    <img src="/user_icon.svg" alt="Name Icon" />
-                </div>
+    if (!question_id) {
+      return res.status(400).json({ error: '請提供 question_id' });
+    }
 
-                <div className="input-container-register">
-                    <input
-                        type="email"
-                        placeholder="電子郵件"
-                        value={account}
-                        onChange={(e) => setAccount(e.target.value)}
-                    />
-                    <img src="/mail_icon.svg" alt="Email Icon" />
-                </div>
+    const questionRef = doc(firestoreInstance, 'question', String(question_id));
+    const questionSnap = await getDoc(questionRef);
 
-                <div className="input-container-register">
-                    <input
-                        type={isVisible[0] ? 'text' : 'password'}
-                        placeholder="密碼"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <img src="/key_icon.svg" alt="Password Icon" />
-                    <img
-                        src={isVisible[0] ? "/remove_red_eye_not.svg" : "/remove_red_eye.svg"}
-                        alt="檢視密碼"
-                        id="RegisterPasswordEye"
-                        onClick={() => toggleVisibility(0)}
-                    />
-                </div>
+    if (!questionSnap.exists()) {
+      return res.status(404).json({ error: '問題不存在' });
+    }
 
-                <div className="input-container-register">
-                    <input
-                        type={isVisible[1] ? 'text' : 'password'}
-                        placeholder="確認密碼"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                    <img src="/key_icon.svg" alt="Password Icon" />
-                    <img
-                        src={isVisible[1] ? "/remove_red_eye_not.svg" : "/remove_red_eye.svg"}
-                        alt="檢視密碼"
-                        id="RegisterPasswordEye2"
-                        onClick={() => toggleVisibility(1)}
-                    />
-                </div>
+    const questionData = questionSnap.data();
+    const answers = questionData.options ? questionData.options.join(", ") : "";
 
-                <div className="button-register">
-                    <img src="/next_step.svg" alt="" onClick={handleRegister} />
-                </div>
+    res.status(200).json({ message: '獲取成功', question: { id: question_id, question: questionData.question, answers } });
+  } catch (error) {
+    console.error('Error fetching question:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-                <div className="other-login-register">
-                    <img src="/other_way_login.svg" alt="" />
-                    <div className="other-login-icons-register">
-                        <img src="/google_btn.svg" alt="Google 註冊" onClick={handleGoogleLogin} />
-                    </div>
-                </div>
+//
+// 📌 更新用户头像
+//
+router.post('/photo', async (req, res) => {
+  try {
+    const { account, photoURL } = req.body;
 
-                <div className="register-login">
-                    <Link to="/login"><img src="/have.svg" alt="" id="register" /></Link>
-                </div>
-            </div>
-        </div>
-    );
-}
+    if (!account || !photoURL) {
+      return res.status(400).json({ error: '請提供帳號和圖片URL' });
+    }
 
-export default Register;
+    const userRef = doc(firestoreInstance, 'player', account);
+    await setDoc(userRef, { photoURL }, { merge: true });
+
+    res.status(200).json({ message: '設定圖片成功' });
+  } catch (error) {
+    console.error('Error updating photo:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//
+// 📌 获取 Bio 信息
+//
+router.post('/bio', async (req, res) => {
+  try {
+    const biosSnap = await getDocs(collection(firestoreInstance, 'bio'));
+    const bios = biosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    res.json({ bios });
+  } catch (error) {
+    console.error('Error fetching bios:', error);
+    res.status(500).json({ error: 'Failed to fetch bios' });
+  }
+});
+
+//
+// 📌 获取好友信息
+//
+router.get('/friend', async (req, res) => {
+  try {
+    const friendsSnap = await getDocs(collection(firestoreInstance, 'friend'));
+    const friends = friendsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    res.json({ friends });
+  } catch (error) {
+    console.error('Error fetching friends:', error);
+    res.status(500).json({ error: 'Failed to fetch friends' });
+  }
+});
+
+module.exports = router;

@@ -154,7 +154,7 @@ router.post('/bio', async (req, res) => {
 //
 // 📌 获取好友信息
 //
-router.get('/friend', async (req, res) => {
+router.post('/friend', async (req, res) => {
   try {
     const friendsSnap = await getDocs(collection(firestoreInstance, 'friend'));
     const friends = friendsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));

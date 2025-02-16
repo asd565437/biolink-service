@@ -45,13 +45,25 @@ app.post('/set-cookie', async (req, res) => {
     if (!account) {
       return res.status(400).json({ error: '缺少 account 數據' });
     }
-
     res.cookie('userAccount', account, {
       maxAge: 24 * 60 * 60 * 1000, // 1 天
       httpOnly: true, // 防止 JavaScript 讀取
       secure: process.env.NODE_ENV === 'production', // 正式環境必須為 HTTPS
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 跨域用 None，本地用 Lax
     });
+
+    const userQuery = query(collection(firestoreInstance, "player"), where("account", "==", account));
+    const querySnapshot = await getDocs(userQuery);
+    
+    if (!querySnapshot.empty) {
+      const firstDoc = querySnapshot.docs[0].data(); // 取第一個文檔
+      res.cookie('userId', firstDoc["id"], {
+        maxAge: 24 * 60 * 60 * 1000, // 1 天
+        httpOnly: true, // 防止 JavaScript 讀取
+        secure: process.env.NODE_ENV === 'production', // 正式環境必須為 HTTPS
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 跨域用 None，本地用 Lax
+      });
+    }
 
     res.json({ message: 'Cookie 設定成功', account });
   } catch (error) {

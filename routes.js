@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
     // 生成用户 ID
     const snapshot = await getCountFromServer(collection(firestoreInstance, "player"));
     const formatNumber = (num) => String(num).padStart(4, '0');
-    const user_id = `biolink${formatNumber(snapshot.data().count + 1)}`;
+    const user_id = `${formatNumber(snapshot.data().count + 1)}`;
 
     // 处理密码（Google 登录不哈希密码）
     const hashedPassword = googleLogin ? null : await bcrypt.hash(password, 10);
@@ -75,6 +75,7 @@ router.post("/login", async (req, res) => {
 
     // 处理密码验证
     if (!googleLogin) {
+
       const isPasswordValid = await bcrypt.compare( String(password || ""), String(user.password || ""));
       if (!isPasswordValid) {
         return res.status(401).json({ error: "密碼錯誤" });

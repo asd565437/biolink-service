@@ -5,10 +5,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
-const { getDocs, collection, query, where } = require("firebase/firestore");
+const { getDocs, collection, query, where, getFirestore } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
-const { firestoreInstance } = require("./firebase"); // 確保 Firestore 正確導入
-
+const { initializeApp } = require("firebase/app");
 const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);

@@ -141,6 +141,7 @@ router.post('/photo', async (req, res) => {
 //
 router.post('/bio', async (req, res) => {
   try {
+    const { user_id } = req.body;
     const biosSnap = await getDocs(collection(firestoreInstance, 'bio'));
     const bios = biosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 

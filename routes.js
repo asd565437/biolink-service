@@ -29,7 +29,8 @@ router.post('/register', async (req, res) => {
 
     // 生成用户 ID
     const snapshot = await getCountFromServer(collection(firestoreInstance, "player"));
-    const user_id = `biolink${snapshot.data().count + 1}`;
+    const formatNumber = (num) => String(num).padStart(4, '0');
+    const user_id = `${formatNumber(snapshot.data().count + 1)}`;
 
     // 处理密码（Google 登录不哈希密码）
     const hashedPassword = googleLogin ? null : await bcrypt.hash(password, 10);

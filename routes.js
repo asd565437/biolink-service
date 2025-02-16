@@ -75,7 +75,7 @@ router.post("/login", async (req, res) => {
 
     // 处理密码验证
     if (!googleLogin) {
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare( String(password || ""), String(user.password || ""));
       if (!isPasswordValid) {
         return res.status(401).json({ error: "密碼錯誤" });
       }

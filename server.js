@@ -6,10 +6,12 @@ const WebSocket = require('ws');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
 const { getDocs, collection, query, where } = require("firebase/firestore");
+const { firebaseConfig } = require("./firebase.js");
 const { firestoreInstance } = require("./firebase"); // 確保 Firestore 正確導入
 
 const app = express();
-
+const firestoreApp = initializeApp(firebaseConfig);
+const firestoreInstance = getFirestore(firestoreApp);
 // **中間件**
 app.use(cookieParser()); // 解析 Cookie
 app.use(express.json()); // 解析 JSON 請求體

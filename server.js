@@ -5,14 +5,16 @@ const http = require('http');
 const WebSocket = require('ws');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
+const { getDocs, collection, query, where } = require("firebase/firestore");
+const { firestoreInstance } = require("./firebase"); // 確保 Firestore 正確導入
 
 const app = express();
 
-// **中間件順序（重要）**
+// **中間件**
 app.use(cookieParser()); // 解析 Cookie
 app.use(express.json()); // 解析 JSON 請求體
 
-// 伺服器端口
+// **伺服器端口**
 const PORT = process.env.PORT || 5000;
 
 // **CORS 配置**
@@ -23,8 +25,8 @@ app.use(
       'https://biolink-service.onrender.com', // 正式環境
       'https://biolink-zsl3.onrender.com',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 允許的請求方法
-    allowedHeaders: ['Content-Type', 'Authorization'], // 允許的請求標頭
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, // 允許攜帶 Cookie
   })
 );
@@ -45,42 +47,50 @@ app.post('/set-cookie', async (req, res) => {
     if (!account) {
       return res.status(400).json({ error: '缺少 account 數據' });
     }
+
+    // 設置 userAccount Cookie
     res.cookie('userAccount', account, {
       maxAge: 24 * 60 * 60 * 1000, // 1 天
-      httpOnly: true, // 防止 JavaScript 讀取
-      secure: process.env.NODE_ENV === 'production', // 正式環境必須為 HTTPS
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 跨域用 None，本地用 Lax
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
     });
 
+    // 查詢 Firestore 獲取 userId
     const userQuery = query(collection(firestoreInstance, "player"), where("account", "==", account));
     const querySnapshot = await getDocs(userQuery);
 
+    let userId = null;
     if (!querySnapshot.empty) {
-      const firstDoc = querySnapshot.docs[0].data(); // 取第一個文檔
-      res.cookie('userId', firstDoc["id"], {
-        maxAge: 24 * 60 * 60 * 1000, // 1 天
-        httpOnly: true, // 防止 JavaScript 讀取
-        secure: process.env.NODE_ENV === 'production', // 正式環境必須為 HTTPS
-        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 跨域用 None，本地用 Lax
+      const firstDoc = querySnapshot.docs[0];
+      userId = firstDoc.id; // Firestore 的 id 來自 doc.id，而不是 doc.data().id
+
+      res.cookie('userId', userId, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       });
     }
 
-    res.json({ message: 'Cookie 設定成功', account });
+    return res.json({ message: 'Cookie 設定成功', account, userId });
+
   } catch (error) {
     console.error('設定 Cookie 失敗:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    return res.status(500).json({ error: '伺服器錯誤' });
   }
 });
 
 // **獲取 Cookie**
 app.get('/get-cookie', async (req, res) => {
   try {
-    res.json({ account: req.cookies.userAccount || null,
+    return res.json({ 
+      account: req.cookies.userAccount || null,
       id: req.cookies.userId || null
-     });
+    });
   } catch (error) {
     console.error('獲取 Cookie 失敗:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    return res.status(500).json({ error: '伺服器錯誤' });
   }
 });
 
@@ -89,10 +99,10 @@ app.get('/external-api', async (req, res) => {
   try {
     const apiUrl = 'https://example.com/data';
     const response = await axios.get(apiUrl, { withCredentials: true });
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error) {
     console.error('外部 API 請求失敗:', error);
-    res.status(500).json({ error: '無法獲取外部數據' });
+    return res.status(500).json({ error: '無法獲取外部數據' });
   }
 });
 

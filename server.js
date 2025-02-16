@@ -64,7 +64,7 @@ app.post('/set-cookie', async (req, res) => {
     let userId = null;
     if (!querySnapshot.empty) {
       const firstDoc = querySnapshot.docs[0];
-      userId = doc.data().id; // Firestore 的 id 來自 doc.id，而不是 doc.data().id
+      userId = firstDoc["id"]; // Firestore 的 id 來自 doc.id，而不是 doc.data().id
 
       res.cookie('userId', userId, {
         maxAge: 24 * 60 * 60 * 1000,

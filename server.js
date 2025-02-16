@@ -49,18 +49,18 @@ app.post('/set-cookie', async (req, res) => {
     console.error('设置 Cookie 失败:', error);
     res.status(500).json({ error: '服务器错误' });
   }
-});
+}, { withCredentials: true });
 
 // **获取 Cookie**
 app.get('/get-cookie', async (req, res) => {
   try {
-    console.log(req.cookies.userAccount)
+    console.log(req.cookies)
     res.json({ account: req.cookies.userAccount || null });
   } catch (error) {
     console.error('获取 Cookie 失败:', error);
     res.status(500).json({ error: '服务器错误' });
   }
-});
+}, { withCredentials: true });
 
 // **使用 Axios 进行 API 请求**
 app.get('/external-api', async (req, res) => {

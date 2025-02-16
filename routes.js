@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
     const usersSnap = await getDocs(query(collection(firestoreInstance, "player"), where("account", "==", account)));
 
     if (usersSnap.empty) {
-      return res.status(404).json({ error: "帳號不存在" });
+      return res.status(403).json({ error: "帳號不存在" });
     }
 
     const user = usersSnap.docs[0].data();

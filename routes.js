@@ -61,14 +61,14 @@ router.post("/login", async (req, res) => {
     const { account, password, googleLogin } = req.body;
 
     if (!googleLogin && (!account || !password)) {
-      return res.status(400).json({ error: "請輸入帳號密碼" });
+      return res.status(300).json({ error: "請輸入帳號密碼" });
     }
 
     // 查询用户
     const usersSnap = await getDocs(query(collection(firestoreInstance, "player"), where("account", "==", account)));
 
     if (usersSnap.empty) {
-      return res.status(403).json({ error: "帳號不存在" });
+      return res.status(303).json({ error: "帳號不存在" });
     }
 
     const user = usersSnap.docs[0].data();
@@ -78,7 +78,7 @@ router.post("/login", async (req, res) => {
 
       const isPasswordValid = await bcrypt.compare( String(password || ""), String(user.password || ""));
       if (!isPasswordValid) {
-        return res.status(401).json({ error: "密碼錯誤" });
+        return res.status(301).json({ error: "密碼錯誤" });
       }
     }
 

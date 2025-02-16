@@ -5,15 +5,18 @@ const http = require('http');
 const path = require('path');
 const WebSocket = require('ws');
 const cookieParser = require('cookie-parser');
-const axios = require('axios'); // 新增 axios
+const axios = require('axios');
 
 const app = express();
-app.use(cookieParser()); // 解析 Cookie
 
-// 服务器端口（Render 会提供 `PORT` 环境变量）
+// **中间件顺序调整**
+app.use(cookieParser()); // 解析 Cookie
+app.use(express.json()); // 解析 JSON 请求体
+
+// 服务器端口
 const PORT = process.env.PORT || 5000;
 
-// CORS 配置（仅允许 Render 站点访问）
+// **CORS 配置**
 app.use(
   cors({
     origin: [
@@ -22,12 +25,9 @@ app.use(
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true, // 允许前端携带 Cookie 或身份验证令牌
+    credentials: true, // 允许跨域请求携带 Cookie
   })
 );
-
-// 中间件
-app.use(express.json());
 
 // **设置 Cookie**
 app.post('/set-cookie', async (req, res) => {
@@ -40,8 +40,8 @@ app.post('/set-cookie', async (req, res) => {
     res.cookie('userAccount', account, {
       maxAge: 24 * 60 * 60 * 1000, // 1 天
       httpOnly: true, // 防止 JavaScript 读取
-      secure: process.env.NODE_ENV === 'production', // 仅生产环境启用 HTTPS
-      sameSite: 'Lax', // 防止 CSRF 攻击
+      secure: false, // 生产环境必须 HTTPS
+      sameSite: 'None', // 本地用 Lax，跨域用 None
     });
 
     res.json({ message: 'Cookie 设置成功', account });
@@ -54,7 +54,7 @@ app.post('/set-cookie', async (req, res) => {
 // **获取 Cookie**
 app.get('/get-cookie', async (req, res) => {
   try {
-    console.log(req.cookies)
+    console.log('Cookies:', req.cookies); // 确保能打印出 cookies
     res.json({ account: req.cookies.userAccount || null });
   } catch (error) {
     console.error('获取 Cookie 失败:', error);
@@ -77,10 +77,10 @@ app.get('/external-api', async (req, res) => {
 // **路由配置**
 app.use('/api', routes);
 
-// **启动 HTTP 服务器（用于 WebSocket）**
+// **启动 HTTP 服务器**
 const server = http.createServer(app);
 
-// **WebSocket 服务，绑定到 HTTP 服务器**
+// **WebSocket 服务器**
 const wss = new WebSocket.Server({ server });
 
 let users = {};
@@ -93,11 +93,9 @@ wss.on('connection', (ws) => {
       const data = JSON.parse(message);
 
       if (data.type === 'register') {
-        // 用户注册 WebSocket 连接
         users[data.userId] = ws;
         console.log(`用户 ${data.userId} 已连接`);
       } else if (data.type === 'invite') {
-        // 发送邀请
         const { from, to } = data;
         if (users[to]) {
           users[to].send(JSON.stringify({ type: 'invite', from }));
@@ -110,7 +108,6 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    // 断开连接时移除用户
     Object.keys(users).forEach((key) => {
       if (users[key] === ws) {
         delete users[key];

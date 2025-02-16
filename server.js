@@ -54,7 +54,7 @@ app.post('/set-cookie', async (req, res) => {
 
     const userQuery = query(collection(firestoreInstance, "player"), where("account", "==", account));
     const querySnapshot = await getDocs(userQuery);
-    
+
     if (!querySnapshot.empty) {
       const firstDoc = querySnapshot.docs[0].data(); // 取第一個文檔
       res.cookie('userId', firstDoc["id"], {
@@ -75,7 +75,9 @@ app.post('/set-cookie', async (req, res) => {
 // **獲取 Cookie**
 app.get('/get-cookie', async (req, res) => {
   try {
-    res.json({ account: req.cookies.userAccount || null });
+    res.json({ account: req.cookies.userAccount || null,
+      id: req.cookies.userId || null
+     });
   } catch (error) {
     console.error('獲取 Cookie 失敗:', error);
     res.status(500).json({ error: '伺服器錯誤' });

@@ -63,7 +63,6 @@ app.post('/set-cookie', async (req, res) => {
 // **獲取 Cookie**
 app.get('/get-cookie', async (req, res) => {
   try {
-    console.log('Cookies:', req.cookies); // 確保可以獲取 cookies
     res.json({ account: req.cookies.userAccount || null });
   } catch (error) {
     console.error('獲取 Cookie 失敗:', error);

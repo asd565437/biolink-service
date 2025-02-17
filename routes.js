@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require('bcryptjs');
-const { getFirestore, getCountFromServer, collection, query, where, getDocs, doc, setDoc, getDoc } = require("firebase/firestore");
+const { getFirestore, getCountFromServer, collection, query, where, getDocs, doc, setDoc, getDoc, limit } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 
@@ -75,7 +75,6 @@ router.post("/login", async (req, res) => {
 
     // 处理密码验证
     if (!googleLogin) {
-
       const isPasswordValid = await bcrypt.compare( String(password || ""), String(user.password || ""));
       if (!isPasswordValid) {
         return res.status(301).json({ error: "密碼錯誤" });
@@ -143,10 +142,12 @@ router.post('/photo', async (req, res) => {
 //
 router.post('/bio', async (req, res) => {
   try {
-    const { user_id } = req.body;
-    const biosSnap = await getDocs(collection(firestoreInstance, 'bio'));
-    const bios = biosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+    const { userId } = req.body;
+    const biosSnap = await getDocs(
+      query(collection(firestoreInstance, 'bio'), where("user_id", "==", userId))
+  );
+  
+  const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);
     res.json({ bios });
   } catch (error) {
     console.error('Error fetching bios:', error);

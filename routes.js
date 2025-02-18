@@ -136,7 +136,29 @@ router.post('/photo', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+router.post('/get-friend-info', async (req, res) => {
+  try {
+    const { id } = req.body;
 
+    if (!id) {
+      return res.status(400).json({ error: '請提供 id' });
+    }
+
+    const questionRef = doc(firestoreInstance, 'player', String(id));
+    const questionSnap = await getDoc(questionRef);
+
+    if (!questionSnap.exists()) {
+      return res.status(404).json({ error: 'id不存在' });
+    }
+
+    const questionData = questionSnap.data();
+
+    res.status(200).json({ message: '獲取成功', player: { nickName: questionData.nickname, photoURL: questionData.photoURL} });
+  } catch (error) {
+    console.error('Error fetching question:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 //
 // 📌 获取 Bio 信息
 //

@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
-const http = require("http");  // 创建 HTTP 服务器
+const http = require("http");  // 建立 HTTP 伺服器
 const { Server } = require("socket.io");  // 引入 Socket.IO
 const cookieParser = require("cookie-parser");
 const axios = require("axios");
@@ -13,14 +13,14 @@ const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 
-// **中间件**
+// **中介軟體**
 app.use(cookieParser()); 
 app.use(express.json()); 
 
-// **服务器端口**
+// **伺服器埠號**
 const PORT = process.env.PORT || 5000;
 
-// **CORS 配置**
+// **CORS 設定**
 app.use(
   cors({
     origin: [
@@ -42,12 +42,12 @@ app.options("*", (req, res) => {
   res.sendStatus(204);
 });
 
-// **设置 Cookie**
+// **設定 Cookie**
 app.post("/set-cookie", async (req, res) => {
   try {
     const { account } = req.body;
     if (!account) {
-      return res.status(400).json({ error: "缺少 account 数据" });
+      return res.status(400).json({ error: "缺少 account 資料" });
     }
 
     res.cookie("userAccount", account, {
@@ -57,7 +57,7 @@ app.post("/set-cookie", async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
-    // 查询 Firestore 获取 userId
+    // 查詢 Firestore 取得 userId
     const userQuery = query(
       collection(firestoreInstance, "player"),
       where("account", "==", account)
@@ -77,14 +77,14 @@ app.post("/set-cookie", async (req, res) => {
       });
     }
 
-    return res.json({ message: "Cookie 设置成功", account, userId });
+    return res.json({ message: "Cookie 設定成功", account, userId });
   } catch (error) {
-    console.error("设置 Cookie 失败:", error);
-    return res.status(500).json({ error: "服务器错误" });
+    console.error("設定 Cookie 失敗:", error);
+    return res.status(500).json({ error: "伺服器錯誤" });
   }
 });
 
-// **获取 Cookie**
+// **取得 Cookie**
 app.get("/get-cookie", async (req, res) => {
   try {
     return res.json({
@@ -92,21 +92,21 @@ app.get("/get-cookie", async (req, res) => {
       id: req.cookies.userId || null,
     });
   } catch (error) {
-    console.error("获取 Cookie 失败:", error);
-    return res.status(500).json({ error: "服务器错误" });
+    console.error("取得 Cookie 失敗:", error);
+    return res.status(500).json({ error: "伺服器錯誤" });
   }
 });
 
-// **路由配置**
+// **路由設定**
 app.use("/api", routes);
 
-// **创建 HTTP 服务器**
+// **建立 HTTP 伺服器**
 const server = http.createServer(app);
 
-// **Socket.IO 服务器**
+// **Socket.IO 伺服器**
 const io = new Server(server, {
   cors: {
-    origin: "*", // 允许所有跨域请求
+    origin: "*", // 允許所有跨域請求
     methods: ["GET", "POST"],
   },
 });
@@ -114,39 +114,37 @@ const io = new Server(server, {
 let users = {};
 
 io.on("connection", (socket) => {
-  console.log("Socket.IO 连接成功:", socket.id);
+  console.log("Socket.IO 連線成功:", socket.id);
 
   socket.on("register", (userId) => {
     users[userId] = socket.id;
-    console.log(`用户 ${userId} 已连接, socket ID: ${socket.id}`);
-    console.log("当前在线用户:", users); // 👈 打印所有在线用户
-});
+    console.log(`用戶 ${userId} 已連線, socket ID: ${socket.id}`);
+    console.log("當前在線用戶:", users); // 👈 顯示所有在線用戶
+  });
 
+  socket.on("invite", ({ from, to }) => {
+    console.log(`收到邀請請求: ${from} -> ${to}`);
+    console.log("當前在線用戶:", users);
 
-socket.on("invite", ({ from, to }) => {
-  console.log(`收到邀请请求: ${from} -> ${to}`);
-  console.log("当前在线用户:", users);
-
-  if (users[to]) {
+    if (users[to]) {
       io.to(users[to]).emit("invite", { from });
-      console.log(`成功发送邀请: ${from} -> ${to}`);
-  } else {
-      console.log(`用户 ${to} 不在线，无法发送邀请`);
-  }
-});
-
+      console.log(`成功發送邀請: ${from} -> ${to}`);
+    } else {
+      console.log(`用戶 ${to} 不在線，無法發送邀請`);
+    }
+  });
 
   socket.on("disconnect", () => {
     Object.keys(users).forEach((key) => {
       if (users[key] === socket.id) {
-        console.log(`用户 ${key} 断开连接`);
+        console.log(`用戶 ${key} 斷開連線`);
         delete users[key];
       }
     });
   });
 });
 
-// **启动服务器**
+// **啟動伺服器**
 server.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+  console.log(`伺服器運行在 http://localhost:${PORT}`);
 });

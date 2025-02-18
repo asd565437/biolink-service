@@ -118,15 +118,23 @@ io.on("connection", (socket) => {
 
   socket.on("register", (userId) => {
     users[userId] = socket.id;
-    console.log(`用户 ${userId} 已连接`);
-  });
+    console.log(`用户 ${userId} 已连接, socket ID: ${socket.id}`);
+    console.log("当前在线用户:", users); // 👈 打印所有在线用户
+});
 
-  socket.on("invite", ({ from, to }) => {
-    if (users[to]) {
+
+socket.on("invite", ({ from, to }) => {
+  console.log(`收到邀请请求: ${from} -> ${to}`);
+  console.log("当前在线用户:", users);
+
+  if (users[to]) {
       io.to(users[to]).emit("invite", { from });
-      console.log(`用户 ${from} 邀请了 ${to}`);
-    }
-  });
+      console.log(`成功发送邀请: ${from} -> ${to}`);
+  } else {
+      console.log(`用户 ${to} 不在线，无法发送邀请`);
+  }
+});
+
 
   socket.on("disconnect", () => {
     Object.keys(users).forEach((key) => {

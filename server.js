@@ -18,7 +18,7 @@ app.use(cookieParser()); // 解析 Cookie
 app.use(express.json()); // 解析 JSON 请求体
 
 // **服务器端口**
-const PORT = process.env.PORT || 5000;
+const PORT = 443 || 5000;
 
 // **CORS 配置**
 app.use(

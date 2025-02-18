@@ -123,7 +123,7 @@ io.on("connection", (socket) => {
 });
 
 
-socket.on("invite", ({ from, to }) => {
+socket.on("invite-friend", ({ from, to }) => {
   console.log(`收到邀请请求: ${from} -> ${to}`);
   console.log("当前在线用户:", users);
 

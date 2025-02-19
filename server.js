@@ -118,10 +118,8 @@ io.on("connection", (socket) => {
 
   socket.on("accept-invite", ({ friendId, roomId, userId}) => {
     socket.join(roomId);
-    io.to(roomId).emit("joined-room", { userId });
-    io.to(roomId).emit("joined-room", { friendId });
-    console.log(`用戶 ${userId} 加入房間 ${roomId}`);
-    console.log(`用戶 ${friendId} 加入房間 ${roomId}`);
+    console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
+    io.to(roomId).emit("joined-room", { users: [userId, friendId] });
   });
 
   socket.on("disconnect", () => {

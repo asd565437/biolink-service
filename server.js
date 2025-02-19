@@ -1,10 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
-const http = require("http");  // 建立 HTTP 伺服器
-const { Server } = require("socket.io");  // 引入 Socket.IO
+const http = require("http");
+const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const axios = require("axios");
 const { getDocs, collection, query, where, getFirestore } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
@@ -13,14 +12,11 @@ const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 
-// **中介軟體**
 app.use(cookieParser()); 
 app.use(express.json()); 
 
-// **伺服器埠號**
 const PORT = process.env.PORT || 5000;
 
-// **CORS 設定**
 app.use(
   cors({
     origin: [
@@ -42,13 +38,10 @@ app.options("*", (req, res) => {
   res.sendStatus(204);
 });
 
-// **設定 Cookie**
 app.post("/set-cookie", async (req, res) => {
   try {
     const { account } = req.body;
-    if (!account) {
-      return res.status(400).json({ error: "缺少 account 資料" });
-    }
+    if (!account) return res.status(400).json({ error: "缺少 account 資料" });
 
     res.cookie("userAccount", account, {
       maxAge: 24 * 60 * 60 * 1000,
@@ -57,14 +50,13 @@ app.post("/set-cookie", async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
-    // 查詢 Firestore 取得 userId
     const userQuery = query(
       collection(firestoreInstance, "player"),
       where("account", "==", account)
     );
     const querySnapshot = await getDocs(userQuery);
-
     let userId = null;
+
     if (!querySnapshot.empty) {
       const firstDoc = querySnapshot.docs[0];
       userId = firstDoc.id;
@@ -84,7 +76,6 @@ app.post("/set-cookie", async (req, res) => {
   }
 });
 
-// **取得 Cookie**
 app.get("/get-cookie", async (req, res) => {
   try {
     return res.json({
@@ -97,16 +88,12 @@ app.get("/get-cookie", async (req, res) => {
   }
 });
 
-// **路由設定**
 app.use("/api", routes);
 
-// **建立 HTTP 伺服器**
 const server = http.createServer(app);
-
-// **Socket.IO 伺服器**
 const io = new Server(server, {
   cors: {
-    origin: "*", // 允許所有跨域請求
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -119,32 +106,30 @@ io.on("connection", (socket) => {
   socket.on("register", (userId) => {
     users[userId] = socket.id;
     console.log(`用戶 ${userId} 已連線, socket ID: ${socket.id}`);
-    console.log("當前在線用戶:", users); // 👈 顯示所有在線用戶
   });
 
   socket.on("invite", ({ from, to }) => {
-    console.log(`收到邀請請求: ${from} -> ${to}`);
-    console.log("當前在線用戶:", users);
-
     if (users[to]) {
-      io.to(users[to]).emit("invite", { from });
-      console.log(`成功發送邀請: ${from} -> ${to}`);
-    } else {
-      console.log(`用戶 ${to} 不在線，無法發送邀請`);
+      const roomId = `room_${from}_${to}`;
+      socket.join(roomId);
+      io.to(users[to]).emit("invite", { from, roomId });
     }
+  });
+
+  socket.on("accept-invite", ({ userId, roomId }) => {
+    socket.join(roomId);
+    io.to(roomId).emit("joined-room", { userId });
   });
 
   socket.on("disconnect", () => {
     Object.keys(users).forEach((key) => {
       if (users[key] === socket.id) {
-        console.log(`用戶 ${key} 斷開連線`);
         delete users[key];
       }
     });
   });
 });
 
-// **啟動伺服器**
 server.listen(PORT, () => {
   console.log(`伺服器運行在 http://localhost:${PORT}`);
 });

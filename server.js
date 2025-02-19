@@ -119,6 +119,7 @@ io.on("connection", (socket) => {
   socket.on("accept-invite", ({ userId, roomId }) => {
     socket.join(roomId);
     io.to(roomId).emit("joined-room", { userId });
+    console.log(`用戶 ${userId} 加入房間 ${roomId}`);
   });
 
   socket.on("disconnect", () => {

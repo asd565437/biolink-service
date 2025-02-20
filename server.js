@@ -123,6 +123,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("get-question-ids", (roomId) => {
+    console.log(roomId)
     const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
     for (let i = numbers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -130,7 +131,6 @@ io.on("connection", (socket) => {
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
     roomData[roomId] = { question_ids };
-    console.log(roomData[roomId])
     if (roomData[roomId]) {
       socket.emit("question-ids", roomData[roomId].question_ids);
     }

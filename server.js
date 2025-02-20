@@ -16,7 +16,9 @@ app.use(cookieParser());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const roomData = {};
+const roomData = {};  // 存储房间的问题 ID
+const roomUsers = {}; // 存储房间的用户列表
+
 app.use(
   cors({
     origin: [
@@ -38,56 +40,6 @@ app.options("*", (req, res) => {
   res.sendStatus(204);
 });
 
-app.post("/set-cookie", async (req, res) => {
-  try {
-    const { account } = req.body;
-    if (!account) return res.status(400).json({ error: "缺少 account 資料" });
-
-    res.cookie("userAccount", account, {
-      maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    });
-
-    const userQuery = query(
-      collection(firestoreInstance, "player"),
-      where("account", "==", account)
-    );
-    const querySnapshot = await getDocs(userQuery);
-    let userId = null;
-
-    if (!querySnapshot.empty) {
-      const firstDoc = querySnapshot.docs[0];
-      userId = firstDoc.id;
-
-      res.cookie("userId", userId, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      });
-    }
-
-    return res.json({ message: "Cookie 設定成功", account, userId });
-  } catch (error) {
-    console.error("設定 Cookie 失敗:", error);
-    return res.status(500).json({ error: "伺服器錯誤" });
-  }
-});
-
-app.get("/get-cookie", async (req, res) => {
-  try {
-    return res.json({
-      account: req.cookies.userAccount || null,
-      id: req.cookies.userId || null,
-    });
-  } catch (error) {
-    console.error("取得 Cookie 失敗:", error);
-    return res.status(500).json({ error: "伺服器錯誤" });
-  }
-});
-
 app.use("/api", routes);
 
 const server = http.createServer(app);
@@ -101,13 +53,15 @@ const io = new Server(server, {
 let users = {};
 
 io.on("connection", (socket) => {
-  console.log("Socket.IO 連線成功:", socket.id);
+  console.log("Socket.IO 连接成功:", socket.id);
 
+  // 用户注册到 Socket 服务器
   socket.on("register", (userId) => {
     users[userId] = socket.id;
-    console.log(`用戶 ${userId} 已連線, socket ID: ${socket.id}`);
+    console.log(`用户 ${userId} 连接成功, socket ID: ${socket.id}`);
   });
 
+  // 处理邀请
   socket.on("invite", ({ from, to }) => {
     if (users[to]) {
       const roomId = `room_${from}_${to}`;
@@ -116,28 +70,70 @@ io.on("connection", (socket) => {
     }
   });
 
+  // 处理接受邀请
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
-    console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
+
+    if (!roomUsers[roomId]) roomUsers[roomId] = new Set();
+    roomUsers[roomId].add(socket.id);
+
+    console.log(`用户 ${userId} 和 ${friendId} 加入房间 ${roomId}`);
+
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
 
+  // 处理获取题目 ID
   socket.on("get-question-ids", (roomId) => {
-    const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
-    for (let i = numbers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+    if (!roomData[roomId]) {
+      const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
+      for (let i = numbers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+      }
+      roomData[roomId] = { question_ids: numbers.slice(0, 5) }; // 取前5个
+      console.log(`房间 ${roomId} 生成新题目:`, roomData[roomId].question_ids);
     }
-    const question_ids = numbers.slice(0, 5);  // 取前5个
-    if(!roomData[roomId])
-      roomData[roomId] = { question_ids };
-    console.log(roomData[roomId])
-    if (roomData[roomId]) {
-      socket.emit("question-ids", roomData[roomId].question_ids);
+
+    socket.emit("question-ids", roomData[roomId].question_ids);
+  });
+
+  // 处理用户离开房间
+  socket.on("leave-room", (roomId) => {
+    socket.leave(roomId);
+    if (roomUsers[roomId]) {
+      roomUsers[roomId].delete(socket.id);
+      console.log(`用户 ${socket.id} 退出房间 ${roomId}`);
+
+      // 如果房间没人了，就删除数据
+      if (roomUsers[roomId].size === 0) {
+        delete roomData[roomId];
+        delete roomUsers[roomId];
+        console.log(`房间 ${roomId} 已空，删除数据`);
+      }
     }
   });
 
+  // 处理用户断开连接
   socket.on("disconnect", () => {
+    console.log("用户断开连接:", socket.id);
+
+    // 查找该用户在哪个房间，并移除
+    for (const roomId in roomUsers) {
+      if (roomUsers[roomId].has(socket.id)) {
+        roomUsers[roomId].delete(socket.id);
+        console.log(`用户 ${socket.id} 断开连接，退出房间 ${roomId}`);
+
+        // 如果房间没人了，就删除数据
+        if (roomUsers[roomId].size === 0) {
+          delete roomData[roomId];
+          delete roomUsers[roomId];
+          console.log(`房间 ${roomId} 已空，删除数据`);
+        }
+        break;
+      }
+    }
+
+    // 移除用户映射
     Object.keys(users).forEach((key) => {
       if (users[key] === socket.id) {
         delete users[key];
@@ -147,5 +143,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`伺服器運行在 http://localhost:${PORT}`);
+  console.log(`服务器运行在 http://localhost:${PORT}`);
 });

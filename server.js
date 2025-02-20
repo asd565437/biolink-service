@@ -12,15 +12,15 @@ const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 
-app.use(cookieParser()); 
-app.use(express.json()); 
+app.use(cookieParser());
+app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
     origin: [
-      "http://localhost:3000", 
+      "http://localhost:3000",
       "https://biolink-service.onrender.com",
       "https://biolink-zsl3.onrender.com",
     ],
@@ -116,10 +116,24 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("accept-invite", ({ friendId, roomId, userId}) => {
+  socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
-    io.to(roomId).emit("joined-room", { users: [userId, friendId],roomId });
+    io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
+  });
+
+  socket.on("get-question-ids", (roomId) => {
+    const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
+    for (let i = numbers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+    }
+    const question_ids = numbers.slice(0, 5);  // 取前5个
+    roomData[roomId] = { question_ids };
+
+    if (roomData[roomId]) {
+      socket.emit("question-ids", roomData[roomId].question_ids);
+    }
   });
 
   socket.on("disconnect", () => {

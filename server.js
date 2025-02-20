@@ -7,11 +7,24 @@ const cookieParser = require("cookie-parser");
 const { getDocs, collection, query, where, getFirestore } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
+const crypto = require("crypto");
 
 const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 
+
+function generateRandomQuestions() {
+  const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
+  for (let i = numbers.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1); // 使用 crypto.randomInt() 代替 Math.random()
+    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+  }
+  return numbers.slice(0, 5); // 取前5个
+}
+
+// 在服务器启动时预生成
+const questionIdsOnStartup = generateRandomQuestions();
 app.use(cookieParser());
 app.use(express.json());
 
@@ -130,7 +143,7 @@ io.on("connection", (socket) => {
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
     if(!roomData[roomId])
-      roomData[roomId] = { question_ids };
+      roomData[roomId] = { question_ids: generateRandomQuestions() };
     console.log(roomData[roomId])
     if (roomData[roomId]) {
       socket.emit("question-ids", roomData[roomId].question_ids);

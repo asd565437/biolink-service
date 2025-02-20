@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-
+const roomData = {};
 app.use(
   cors({
     origin: [
@@ -123,7 +123,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("get-question-ids", (roomId) => {
-    console.log(roomId)
     const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
     for (let i = numbers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

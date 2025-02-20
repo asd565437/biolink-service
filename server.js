@@ -130,7 +130,7 @@ io.on("connection", (socket) => {
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
     roomData[roomId] = { question_ids };
-
+    console.log(roomData[roomId])
     if (roomData[roomId]) {
       socket.emit("question-ids", roomData[roomId].question_ids);
     }

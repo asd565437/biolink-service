@@ -101,6 +101,20 @@ app.get("/get-cookie", async (req, res) => {
   }
 });
 
+app.get('/clear_cookie', (req, res) => {
+  res.clearCookie("userAccount", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  });
+  res.clearCookie("userId", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+});
+  res.send("userAccount Cookie Cleared");
+});
+
 app.use("/api", routes);
 
 const server = http.createServer(app);

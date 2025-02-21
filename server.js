@@ -149,9 +149,9 @@ io.on("connection", (socket) => {
       socket.emit("question-ids", roomData[roomId].question_ids);
     }
   });
-  socket.on("leave-room", (roomName,userId) => {
-    socket.leave(roomName);
-    console.log(`用戶 ${userId} 離開房間 ${roomName}`)
+  socket.on("leave-room", (roomId,userId) => {
+    socket.leave(roomId);
+    console.log(`用戶 ${userId} 離開房間 ${roomId}`)
 });
 
   socket.on("disconnect", () => {

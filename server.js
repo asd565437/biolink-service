@@ -100,6 +100,13 @@ app.get("/get-cookie", async (req, res) => {
     return res.status(500).json({ error: "伺服器錯誤" });
   }
 });
+app.get("/check_auth", (req, res) => {
+  if (req.cookies.userAccount) {
+    res.json({ isAuthenticated: true });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
+});
 
 app.get('/clear_cookie', (req, res) => {
   res.clearCookie("userAccount", {

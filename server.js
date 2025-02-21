@@ -118,6 +118,7 @@ io.on("connection", (socket) => {
 
   socket.on("register", (userId) => {
     users[userId] = socket.id;
+    socket.data.userId = userId; // 儲存 userId 方便後續使用
     console.log(`用戶 ${userId} 已連線, socket ID: ${socket.id}`);
   });
 
@@ -159,6 +160,8 @@ io.on("connection", (socket) => {
     Object.keys(users).forEach((key) => {
       if (users[key] === socket.id) {
         delete users[key];
+        const userId = socket.data.userId || "Unknown";
+        const roomId = [...socket.rooms].filter(r => r !== socket.id); // 取得該用戶所在的房間（不包含自己的 socket.id）
         socket.leave(roomId);
         console.log(`用戶 ${userId} 離開房間 ${roomId}`)
       }

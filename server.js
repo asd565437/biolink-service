@@ -152,12 +152,15 @@ io.on("connection", (socket) => {
   socket.on("leave-room", (roomId,userId) => {
     socket.leave(roomId);
     console.log(`用戶 ${userId} 離開房間 ${roomId}`)
+    socket.to(roomId).emit("user-left", { id: socket.id, room: roomId });
 });
 
   socket.on("disconnect", () => {
     Object.keys(users).forEach((key) => {
       if (users[key] === socket.id) {
         delete users[key];
+        socket.leave(roomId);
+        console.log(`用戶 ${userId} 離開房間 ${roomId}`)
       }
     });
   });

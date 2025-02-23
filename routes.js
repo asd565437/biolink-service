@@ -23,6 +23,24 @@ const getFriends = async (userId) => {
     friends.push(doc.data().user2);
   });
 
+  const getUsersByIds = async (userIds) => {
+    if (!userIds || userIds.length === 0) {
+        return [];
+    }
+
+    const db = getFirestore();
+    const usersCollection = collection(db, "player");
+
+    // 🔥 使用 `where("id", "in", userIds)` 查詢
+    const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 10))); // 限制最多 10 個 ID
+    const usersSnap = await getDocs(usersQuery);
+
+    return usersSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+};
+
   snapshot2.forEach((doc) => {
     friends.push(doc.data().user1);
   });
@@ -204,7 +222,12 @@ router.post('/friend', async (req, res) => {
   try {
     const { userId } = req.body;
     const friends = await getFriends(userId);
-    res.json({ friends });
+
+    if (!friends || friends.length === 0) {
+      return [];
+  }
+  const userInfo = await getUsersByIds(friends);
+    res.json({ userInfo });
   } catch (error) {
     console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Failed to fetch friends' });

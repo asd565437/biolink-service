@@ -209,7 +209,7 @@ io.on("connection", (socket) => {
 
   socket.on("submit_question", async ({ roomId, userId, answers }) => {
     if (!roomAnswers[roomId]) {
-        roomAnswers[roomId] = {};
+      roomAnswers[roomId] = {};
     }
 
     roomAnswers[roomId][userId] = answers; // 儲存該用戶的回答（包含 answerP1 陣列 和 answerP2 陣列）
@@ -219,71 +219,73 @@ io.on("connection", (socket) => {
 
     // 確保兩個玩家都已回答
     if (playersInRoom.length === 2) {
-        console.log("both-answered");
+      console.log("both-answered");
 
-        // 🔥 從 Firestore 獲取這些玩家的 `nickname`
-        let playerNicknames = {};
-        const usersCollection = collection(firestoreInstance, "player");
+      // 🔥 從 Firestore 獲取這些玩家的 `nickname`
+      let playerNicknames = {};
+      const usersCollection = collection(firestoreInstance, "player");
+      const snapshot = await getCountFromServer(collection(firestoreInstance, "bio"));
+      const formatNumber = (num) => String(num).padStart(4, '0');
+      const bio_id = `${formatNumber(snapshot.data().count + 1)}`;
+      try {
+        const usersQuery = query(usersCollection, where("id", "in", playersInRoom));
+        const usersSnap = await getDocs(usersQuery);
 
-        try {
-            const usersQuery = query(usersCollection, where("id", "in", playersInRoom));
-            const usersSnap = await getDocs(usersQuery);
-
-            usersSnap.forEach((doc) => {
-                const data = doc.data();
-                playerNicknames[data.id] = data.nickname; // 獲取 nickname
-            });
-
-            console.log("玩家 Nicknames:", playerNicknames);
-        } catch (error) {
-            console.error("獲取玩家暱稱時出錯:", error);
-        }
-
-        // 取得兩個玩家的 ID
-        const [player1, player2] = playersInRoom;
-
-        // 取得兩個玩家的答案
-        const player1Answers = roomAnswers[roomId][player1]; // { answerP1: [...], answerP2: [...] }
-        const player2Answers = roomAnswers[roomId][player2]; // { answerP1: [...], answerP2: [...] }
-
-        console.log(`玩家 ${player1} 的答案: P1=${player1Answers.answerP1}, P2=${player1Answers.answerP2}`);
-        console.log(`玩家 ${player2} 的答案: P1=${player2Answers.answerP1}, P2=${player2Answers.answerP2}`);
-
-        // 🔥 交叉比對：每一題的 P2 與對方的 P1 是否相同
-        let player1CorrectCount = 0;
-        let player2CorrectCount = 0;
-
-        // 確保 `answerP1` 和 `answerP2` 陣列長度相等
-        let questionCount = Math.min(player1Answers.answerP1.length, player2Answers.answerP1.length);
-
-        for (let i = 0; i < questionCount; i++) {
-            if (player1Answers.answerP2[i] === player2Answers.answerP1[i]) {
-                player1CorrectCount++;
-            }
-            if (player2Answers.answerP2[i] === player1Answers.answerP1[i]) {
-                player2CorrectCount++;
-            }
-        }
-
-        // 總答對題數
-        let totalCorrect = player1CorrectCount + player2CorrectCount;
-
-        console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
-        console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
-        console.log(`總共答對的題數: ${totalCorrect}`);
-
-        // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
-        io.to(roomId).emit("both-answered", {
-            totalCorrect: totalCorrect, // 總共答對的題數
-            createdAt: formatDate(new Date()),
-            bio_id: bio_id,
-            nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
+        usersSnap.forEach((doc) => {
+          const data = doc.data();
+          playerNicknames[data.id] = data.nickname; // 獲取 nickname
         });
 
-        // 清空房間答案（避免影響下一題）
-        roomAnswers[roomId] = {};
+        console.log("玩家 Nicknames:", playerNicknames);
+      } catch (error) {
+        console.error("獲取玩家暱稱時出錯:", error);
+      }
+
+      // 取得兩個玩家的 ID
+      const [player1, player2] = playersInRoom;
+
+      // 取得兩個玩家的答案
+      const player1Answers = roomAnswers[roomId][player1]; // { answerP1: [...], answerP2: [...] }
+      const player2Answers = roomAnswers[roomId][player2]; // { answerP1: [...], answerP2: [...] }
+
+      console.log(`玩家 ${player1} 的答案: P1=${player1Answers.answerP1}, P2=${player1Answers.answerP2}`);
+      console.log(`玩家 ${player2} 的答案: P1=${player2Answers.answerP1}, P2=${player2Answers.answerP2}`);
+
+      // 🔥 交叉比對：每一題的 P2 與對方的 P1 是否相同
+      let player1CorrectCount = 0;
+      let player2CorrectCount = 0;
+
+      // 確保 `answerP1` 和 `answerP2` 陣列長度相等
+      let questionCount = Math.min(player1Answers.answerP1.length, player2Answers.answerP1.length);
+
+      for (let i = 0; i < questionCount; i++) {
+        if (player1Answers.answerP2[i] === player2Answers.answerP1[i]) {
+          player1CorrectCount++;
+        }
+        if (player2Answers.answerP2[i] === player1Answers.answerP1[i]) {
+          player2CorrectCount++;
+        }
+      }
+
+      // 總答對題數
+      let totalCorrect = player1CorrectCount + player2CorrectCount;
+
+      console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
+      console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
+      console.log(`總共答對的題數: ${totalCorrect}`);
+
+      // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
+      io.to(roomId).emit("both-answered", {
+        totalCorrect: totalCorrect, // 總共答對的題數
+        createdAt: formatDate(new Date()),
+        bio_id: bio_id,
+        nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
+      });
+
+      // 清空房間答案（避免影響下一題）
+      roomAnswers[roomId] = {};
     }
-});
+  });
 
 
   socket.on("get-question-ids", (roomId) => {

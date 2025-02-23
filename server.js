@@ -150,6 +150,15 @@ io.on("connection", (socket) => {
       io.to(users[to]).emit("invite", { from, roomId });
     }
   });
+  socket.on("add_friend", ({ from, to }) => {
+    if (users[to]) {
+      io.to(users[to]).emit("add_friend", { from });
+    }
+  });
+
+  socket.on("agree_friend", ({ userId, friendId }) => {
+      console.log(`用戶 ${userId} 和 ${friendId} 成為好友`);
+  });
 
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);

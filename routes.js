@@ -31,29 +31,47 @@ const getFriendInfo = async (userId, friendIdArray) => {
   const friendsCollection = collection(firestoreInstance, "friends");
 
   try {
-    // 🔥 使用 `array-contains` 查詢 `friendIdArray` 是否包含 `friendId`
-    const q1 = query(friendsCollection, where("user1", "==", userId), where("user2", "array-contains", friendIdArray));
-    const q2 = query(friendsCollection, where("user2", "==", userId), where("user1", "array-contains", friendIdArray));
+    if (!friendIdArray || friendIdArray.length === 0) {
+      console.log("好友 ID 陣列為空");
+      return null;
+    }
 
-    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+    // 🔥 建立所有查詢的 Promise
+    const friendPromises = friendIdArray.map(async (friendId) => {
+      const q1 = query(friendsCollection, where("user1", "==", userId), where("user2", "==", friendId));
+      const q2 = query(friendsCollection, where("user1", "==", friendId), where("user2", "==", userId));
 
-    let friendInfo = [];
+      const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
-    snapshot1.forEach(doc => friendInfo.push(doc.data()));
-    snapshot2.forEach(doc => friendInfo.push(doc.data()));
+      if (!snapshot1.empty) {
+        return snapshot1.docs[0].data();
+      } else if (!snapshot2.empty) {
+        return snapshot2.docs[0].data();
+      } else {
+        return null; // 這個 friendId 不是好友
+      }
+    });
+
+    // 等待所有查詢完成
+    const results = await Promise.all(friendPromises);
+
+    // 過濾掉 null 值（非好友的情況）
+    const friendInfo = results.filter(result => result !== null);
 
     if (friendInfo.length > 0) {
       console.log("好友資訊:", friendInfo);
-      return friendInfo;  // 返回好友信息（陣列）
+      return friendInfo;  // 回傳好友信息陣列
     } else {
       console.log("沒有找到好友關係");
       return null;
     }
+
   } catch (error) {
     console.error("獲取好友資訊失敗:", error);
     return null;
   }
 };
+
 
 
 const getUsersByIds = async (userIds) => {

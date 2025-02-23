@@ -273,7 +273,7 @@ io.on("connection", (socket) => {
       console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
       console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
       console.log(`總共答對的題數: ${totalCorrect}`);
-
+      console.log(new Date())
       // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
       io.to(roomId).emit("both-answered", {
         totalCorrect: totalCorrect, // 總共答對的題數

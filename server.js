@@ -249,7 +249,10 @@ io.on("connection", (socket) => {
       // 取得兩個玩家的答案
       const player1Answers = roomAnswers[roomId][player1]; // { answerP1: [...], answerP2: [...] }
       const player2Answers = roomAnswers[roomId][player2]; // { answerP1: [...], answerP2: [...] }
-
+      console.log(player1Answers.answerP1)
+      console.log(player1Answers.answerP2)
+      console.log(player2Answers.answerP1)
+      console.log(player2Answers.answerP2)
       console.log(`玩家 ${player1} 的答案: P1=${player1Answers.answerP1}, P2=${player1Answers.answerP2}`);
       console.log(`玩家 ${player2} 的答案: P1=${player2Answers.answerP1}, P2=${player2Answers.answerP2}`);
 

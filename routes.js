@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const { getFirestore, getCountFromServer, collection, query, where, getDocs, doc, setDoc, getDoc, limit } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
-
 const router = express.Router();
 const app = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(app);
@@ -28,6 +27,35 @@ const getFriends = async (userId) => {
   });
   return friends;
 };
+const getFriendInfo = async (userId, friendIdArray) => {
+  const friendsCollection = collection(firestoreInstance, "friends");
+
+  try {
+    // 🔥 使用 `array-contains` 查詢 `friendIdArray` 是否包含 `friendId`
+    const q1 = query(friendsCollection, where("user1", "==", userId), where("user2", "array-contains", friendIdArray));
+    const q2 = query(friendsCollection, where("user2", "==", userId), where("user1", "array-contains", friendIdArray));
+
+    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+    let friendInfo = [];
+
+    snapshot1.forEach(doc => friendInfo.push(doc.data()));
+    snapshot2.forEach(doc => friendInfo.push(doc.data()));
+
+    if (friendInfo.length > 0) {
+      console.log("好友資訊:", friendInfo);
+      return friendInfo;  // 返回好友信息（陣列）
+    } else {
+      console.log("沒有找到好友關係");
+      return null;
+    }
+  } catch (error) {
+    console.error("獲取好友資訊失敗:", error);
+    return null;
+  }
+};
+
+
 const getUsersByIds = async (userIds) => {
   if (!userIds || userIds.length === 0) {
       return [];
@@ -37,7 +65,7 @@ const getUsersByIds = async (userIds) => {
   const usersCollection = collection(db, "player");
 
   // 🔥 使用 `where("id", "in", userIds)` 查詢
-  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 10))); // 限制最多 10 個 ID
+  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 6))); // 限制最多 10 個 ID
   const usersSnap = await getDocs(usersQuery);
 
   return usersSnap.docs.map(doc => ({
@@ -220,13 +248,14 @@ router.post('/bio', async (req, res) => {
 router.post('/friend', async (req, res) => {
   try {
     const { userId } = req.body;
-    const friends = await getFriends(userId);
+    const friendIds = await getFriends(userId);
 
-    if (!friends || friends.length === 0) {
+    if (!friendIds || friendIds.length === 0) {
       return [];
   }
-  const userInfo = await getUsersByIds(friends);
-    res.json({ userInfo });
+  const userInfo = await getUsersByIds(friendIds);
+  const friendInfo = await getFriendInfo(userId,friendIds);
+    res.json({ userInfo,friendInfo });
   } catch (error) {
     console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Failed to fetch friends' });

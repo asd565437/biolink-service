@@ -205,7 +205,6 @@ router.post('/friend', async (req, res) => {
     const { userId } = req.body;
     console.log(userId)
     const friends = await getFriends(userId);
-    console.log(friends)
     res.json({ friends });
   } catch (error) {
     console.error('Error fetching friends:', error);

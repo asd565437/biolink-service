@@ -23,28 +23,27 @@ const getFriends = async (userId) => {
     friends.push(doc.data().user2);
   });
 
-  const getUsersByIds = async (userIds) => {
-    if (!userIds || userIds.length === 0) {
-        return [];
-    }
-
-    const db = getFirestore();
-    const usersCollection = collection(db, "player");
-
-    // 🔥 使用 `where("id", "in", userIds)` 查詢
-    const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 10))); // 限制最多 10 個 ID
-    const usersSnap = await getDocs(usersQuery);
-
-    return usersSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    }));
-};
-
   snapshot2.forEach((doc) => {
     friends.push(doc.data().user1);
   });
   return friends;
+};
+const getUsersByIds = async (userIds) => {
+  if (!userIds || userIds.length === 0) {
+      return [];
+  }
+
+  const db = getFirestore();
+  const usersCollection = collection(db, "player");
+
+  // 🔥 使用 `where("id", "in", userIds)` 查詢
+  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 10))); // 限制最多 10 個 ID
+  const usersSnap = await getDocs(usersQuery);
+
+  return usersSnap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+  }));
 };
 //
 // 📌 用户注册

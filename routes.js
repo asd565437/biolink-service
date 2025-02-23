@@ -252,7 +252,7 @@ router.post('/bio', async (req, res) => {
   try {
     const { userId } = req.body;
     const biosSnap = await getDocs(
-      query(collection(firestoreInstance, 'bio'), where("user_id", "==", userId))
+      query(collection(firestoreInstance, 'bio'),where("players", "array-contains", userId))
     );
 
     const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);

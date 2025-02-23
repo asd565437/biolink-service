@@ -90,10 +90,12 @@ const getUsersByIds = async (userIds) => {
 
   return usersSnap.docs.map(doc => ({
       id: doc.id,
-      nickname: doc.data().nickname,  // ✅ 只回傳 `nickname`
-      bio_count: doc.data().bio_count // ✅ 只回傳 `bio_count`
+      nickname: doc.data().nickname,   // ✅ 只回傳 `nickname`
+      bio_count: doc.data().bio_count, // ✅ 只回傳 `bio_count`
+      photoURL: doc.data().photoURL    // ✅ 只回傳 `photoURL`
   }));
 };
+
 
 //
 // 📌 用户注册

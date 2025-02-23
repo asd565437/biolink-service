@@ -213,7 +213,7 @@ io.on("connection", (socket) => {
     }
 
     roomAnswers[roomId][userId] = answer;
-    console.log(Object.keys(roomAnswers[roomId]).length)
+    console.log(userId)
     // 檢查是否兩個玩家都回答了
     if (Object.keys(roomAnswers[roomId]).length === 2) {
       console.log("both-answered")

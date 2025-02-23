@@ -8,6 +8,27 @@ const router = express.Router();
 const app = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(app);
 
+const getFriends = async (userId) => {
+  const friendsCollection = collection(firestoreInstance, "friends");
+
+  // 查询好友关系（双向查询）
+  const q1 = query(friendsCollection, where("user1", "==", userId));
+  const q2 = query(friendsCollection, where("user2", "==", userId));
+
+  const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+  let friends = [];
+
+  snapshot1.forEach((doc) => {
+    friends.push(doc.data().user2);
+  });
+
+  snapshot2.forEach((doc) => {
+    friends.push(doc.data().user1);
+  });
+
+  return friends;
+};
 //
 // 📌 用户注册
 //
@@ -182,9 +203,8 @@ router.post('/bio', async (req, res) => {
 //
 router.post('/friend', async (req, res) => {
   try {
-    const friendsSnap = await getDocs(collection(firestoreInstance, 'friend'));
-    const friends = friendsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+    const { userId } = req.body;
+    const friends = getFriends(userId);
     res.json({ friends });
   } catch (error) {
     console.error('Error fetching friends:', error);

@@ -207,7 +207,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
 
-  socket.on("submit_question", ({ roomId, userId, answers }) => {
+  socket.on("submit_question", async ({ roomId, userId, answers }) => {
     if (!roomAnswers[roomId]) {
         roomAnswers[roomId] = {};
     }
@@ -215,11 +215,29 @@ io.on("connection", (socket) => {
     roomAnswers[roomId][userId] = answers; // 儲存該用戶的回答（包含 answerP1 陣列 和 answerP2 陣列）
 
     // 取得房間內所有玩家的 ID
-    const playersInRoom = Object.keys(roomAnswers[roomId]);
+    const playersInRoom = Object.keys(roomAnswers[roomId]); // 🔥 獲取房間內的所有 userId
 
     // 確保兩個玩家都已回答
     if (playersInRoom.length === 2) {
         console.log("both-answered");
+
+        // 🔥 從 Firestore 獲取這些玩家的 `nickname`
+        let playerNicknames = {};
+        const usersCollection = collection(firestoreInstance, "player");
+
+        try {
+            const usersQuery = query(usersCollection, where("id", "in", playersInRoom));
+            const usersSnap = await getDocs(usersQuery);
+
+            usersSnap.forEach((doc) => {
+                const data = doc.data();
+                playerNicknames[data.id] = data.nickname; // 獲取 nickname
+            });
+
+            console.log("玩家 Nicknames:", playerNicknames);
+        } catch (error) {
+            console.error("獲取玩家暱稱時出錯:", error);
+        }
 
         // 取得兩個玩家的 ID
         const [player1, player2] = playersInRoom;
@@ -250,13 +268,16 @@ io.on("connection", (socket) => {
         // 總答對題數
         let totalCorrect = player1CorrectCount + player2CorrectCount;
 
-        console.log(`玩家 ${player1} 答對的題數: ${player1CorrectCount}`);
-        console.log(`玩家 ${player2} 答對的題數: ${player2CorrectCount}`);
+        console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
+        console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
         console.log(`總共答對的題數: ${totalCorrect}`);
 
-        // 傳送比對結果 & 總答對數
+        // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
         io.to(roomId).emit("both-answered", {
-            totalCorrect: totalCorrect // 總共答對的題數
+            totalCorrect: totalCorrect, // 總共答對的題數
+            createdAt: formatDate(new Date()),
+            bio_id: bio_id,
+            nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
         });
 
         // 清空房間答案（避免影響下一題）

@@ -46,12 +46,14 @@ const addFriend = async (userId, friendId) => {
       console.log("已经是好友了！");
       return;
     }
-
+    const utcTime = new Date(); // 獲取當前 UTC 時間=
+    // 🔥 手動加 8 小時
+          const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
     // 还不是好友，存入数据库
     await addDoc(friendsCollection, {
       user1: userId,
       user2: friendId,
-      createdAt: formatDate(new Date()),
+      createdAt: formatDate(gmt8Time),
     });
 
     console.log("好友關係已建立");
@@ -273,12 +275,15 @@ io.on("connection", (socket) => {
       console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
       console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
       console.log(`總共答對的題數: ${totalCorrect}`);
-      console.log(new Date())
+      const utcTime = new Date(); // 獲取當前 UTC 時間=
+// 🔥 手動加 8 小時
+      const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
       // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
       io.to(roomId).emit("both-answered", {
         totalCorrect: totalCorrect, // 總共答對的題數
-        createdAt: formatDate(new Date()),
+        createdAt: formatDate(gmt8Time),
         bio_id: bio_id,
+        players: playersInRoom, // 傳送所有玩家 ID
         nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
       });
 

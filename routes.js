@@ -26,7 +26,7 @@ const getFriends = async (userId) => {
   snapshot2.forEach((doc) => {
     friends.push(doc.data().user1);
   });
-
+  console.log(friends)
   return friends;
 };
 //
@@ -35,7 +35,7 @@ const getFriends = async (userId) => {
 router.post('/register', async (req, res) => {
   try {
     const { account, password, nickName, googleLogin, photoUrl } = req.body;
-    
+
     if (!googleLogin && (!account || !password || !nickName)) {
       return res.status(400).json({ error: '請填寫所有必填欄位' });
     }
@@ -43,7 +43,7 @@ router.post('/register', async (req, res) => {
     // 检查用户是否已存在
     const userQuery = query(collection(firestoreInstance, "player"), where("account", "==", account));
     const userSnap = await getDocs(userQuery);
-    
+
     if (!userSnap.empty) {
       return res.status(400).json({ error: '帳號已存在' });
     }
@@ -96,7 +96,7 @@ router.post("/login", async (req, res) => {
 
     // 处理密码验证
     if (!googleLogin) {
-      const isPasswordValid = await bcrypt.compare( String(password || ""), String(user.password || ""));
+      const isPasswordValid = await bcrypt.compare(String(password || ""), String(user.password || ""));
       if (!isPasswordValid) {
         return res.status(301).json({ error: "密碼錯誤" });
       }
@@ -174,7 +174,7 @@ router.post('/get-friend-info', async (req, res) => {
 
     const questionData = questionSnap.data();
 
-    res.status(200).json({ message: '獲取成功', player: { nickName: questionData.nickname, photoURL: questionData.photoURL} });
+    res.status(200).json({ message: '獲取成功', player: { nickName: questionData.nickname, photoURL: questionData.photoURL } });
   } catch (error) {
     console.error('Error fetching question:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -188,9 +188,9 @@ router.post('/bio', async (req, res) => {
     const { userId } = req.body;
     const biosSnap = await getDocs(
       query(collection(firestoreInstance, 'bio'), where("user_id", "==", userId))
-  );
-  
-  const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);
+    );
+
+    const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);
     res.json({ bios });
   } catch (error) {
     console.error('Error fetching bios:', error);

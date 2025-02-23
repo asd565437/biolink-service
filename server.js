@@ -4,7 +4,7 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, getCountFromServer ,collection, query, where, getFirestore, addDoc } = require("firebase/firestore");
+const { getDocs, getCountFromServer, collection, query, where, getFirestore, addDoc, setDoc } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
@@ -48,7 +48,7 @@ const addFriend = async (userId, friendId) => {
     }
     const utcTime = new Date(); // 獲取當前 UTC 時間=
     // 🔥 手動加 8 小時
-          const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+    const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
     // 还不是好友，存入数据库
     await addDoc(friendsCollection, {
       user1: userId,
@@ -249,10 +249,6 @@ io.on("connection", (socket) => {
       // 取得兩個玩家的答案
       const player1Answers = roomAnswers[roomId][player1]; // { answerP1: [...], answerP2: [...] }
       const player2Answers = roomAnswers[roomId][player2]; // { answerP1: [...], answerP2: [...] }
-      console.log(player1Answers.answerP1)
-      console.log(player1Answers.answerP2)
-      console.log(player2Answers.answerP1)
-      console.log(player2Answers.answerP2)
       console.log(`玩家 ${player1} 的答案: P1=${player1Answers.answerP1}, P2=${player1Answers.answerP2}`);
       console.log(`玩家 ${player2} 的答案: P1=${player2Answers.answerP1}, P2=${player2Answers.answerP2}`);
 
@@ -279,8 +275,17 @@ io.on("connection", (socket) => {
       console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
       console.log(`總共答對的題數: ${totalCorrect}`);
       const utcTime = new Date(); // 獲取當前 UTC 時間=
-// 🔥 手動加 8 小時
+      // 🔥 手動加 8 小時
       const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+
+      await setDoc(doc(firestoreInstance, "bio"), {
+        totalCorrect: totalCorrect, // 總共答對的題數
+        createdAt: formatDate(gmt8Time),
+        bio_id: bio_id,
+        players: playersInRoom, // 傳送所有玩家 ID
+        nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
+      });
+
       // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
       io.to(roomId).emit("both-answered", {
         totalCorrect: totalCorrect, // 總共答對的題數

@@ -10,7 +10,7 @@ const firestoreInstance = getFirestore(app);
 
 const getFriends = async (userId) => {
   const friendsCollection = collection(firestoreInstance, "friends");
-
+  console.log(userId)
   // 查询好友关系（双向查询）
   const q1 = query(friendsCollection, where("user1", "==", userId));
   const q2 = query(friendsCollection, where("user2", "==", userId));

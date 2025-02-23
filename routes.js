@@ -204,7 +204,7 @@ router.post('/friend', async (req, res) => {
   try {
     const { userId } = req.body;
     console.log(userId)
-    const friends = getFriends(userId);
+    const friends = await getFriends(userId);
     console.log(friends)
     res.json({ friends });
   } catch (error) {

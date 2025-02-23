@@ -45,10 +45,10 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
       if (!snapshot1.empty) {
         const data = snapshot1.docs[0].data();
-        return { friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id:friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else if (!snapshot2.empty) {
         const data = snapshot2.docs[0].data();
-        return { friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id:friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else {
         return null; // 這個 friendId 不是好友
       }
@@ -87,9 +87,9 @@ const getUsersByIds = async (userIds) => {
 
   return usersSnap.docs.map(doc => ({
       id: doc.id,
-      nickname: doc.data().nickname,   // ✅ 只回傳 `nickname`
-      bio_count: doc.data().bio_count, // ✅ 只回傳 `bio_count`
-      photoURL: doc.data().photoURL    // ✅ 只回傳 `photoURL`
+      nickname: doc.data().nickname, 
+      bio_count: doc.data().bio_count,
+      photoURL: doc.data().photoURL    
   }));
 };
 

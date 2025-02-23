@@ -171,7 +171,7 @@ const io = new Server(server, {
 });
 
 let users = {};
-
+let roomAnswers = {}; // 追蹤每個房間的回答情況
 io.on("connection", (socket) => {
   console.log("Socket.IO 連線成功:", socket.id);
 
@@ -205,6 +205,19 @@ io.on("connection", (socket) => {
     socket.join(roomId);
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
+  });
+
+  socket.on("submit_question", ({ roomId, userId ,answer}) => {
+    if (!roomAnswers[roomId]) {
+      roomAnswers[roomId] = {};
+  }
+
+  roomAnswers[roomId][userId] = answer;
+
+  // 檢查是否兩個玩家都回答了
+  if (Object.keys(roomAnswers[roomId]).length === 2) {
+      io.to(roomId).emit("both-answered", true);
+  }
   });
 
   socket.on("get-question-ids", (roomId) => {

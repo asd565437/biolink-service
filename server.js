@@ -207,19 +207,63 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
 
-  socket.on("submit_question", ({ roomId, userId, answer }) => {
+  socket.on("submit_question", ({ roomId, userId, answers }) => {
     if (!roomAnswers[roomId]) {
-      roomAnswers[roomId] = {};
+        roomAnswers[roomId] = {};
     }
 
-    roomAnswers[roomId][userId] = answer;
-    console.log(userId)
-    // 檢查是否兩個玩家都回答了
-    if (Object.keys(roomAnswers[roomId]).length === 2) {
-      console.log("both-answered")
-      io.to(roomId).emit("both-answered", true);
+    roomAnswers[roomId][userId] = answers; // 儲存該用戶的回答（包含 answerP1 陣列 和 answerP2 陣列）
+
+    // 取得房間內所有玩家的 ID
+    const playersInRoom = Object.keys(roomAnswers[roomId]);
+
+    // 確保兩個玩家都已回答
+    if (playersInRoom.length === 2) {
+        console.log("both-answered");
+
+        // 取得兩個玩家的 ID
+        const [player1, player2] = playersInRoom;
+
+        // 取得兩個玩家的答案
+        const player1Answers = roomAnswers[roomId][player1]; // { answerP1: [...], answerP2: [...] }
+        const player2Answers = roomAnswers[roomId][player2]; // { answerP1: [...], answerP2: [...] }
+
+        console.log(`玩家 ${player1} 的答案: P1=${player1Answers.answerP1}, P2=${player1Answers.answerP2}`);
+        console.log(`玩家 ${player2} 的答案: P1=${player2Answers.answerP1}, P2=${player2Answers.answerP2}`);
+
+        // 🔥 交叉比對：每一題的 P2 與對方的 P1 是否相同
+        let player1CorrectCount = 0;
+        let player2CorrectCount = 0;
+
+        // 確保 `answerP1` 和 `answerP2` 陣列長度相等
+        let questionCount = Math.min(player1Answers.answerP1.length, player2Answers.answerP1.length);
+
+        for (let i = 0; i < questionCount; i++) {
+            if (player1Answers.answerP2[i] === player2Answers.answerP1[i]) {
+                player1CorrectCount++;
+            }
+            if (player2Answers.answerP2[i] === player1Answers.answerP1[i]) {
+                player2CorrectCount++;
+            }
+        }
+
+        // 總答對題數
+        let totalCorrect = player1CorrectCount + player2CorrectCount;
+
+        console.log(`玩家 ${player1} 答對的題數: ${player1CorrectCount}`);
+        console.log(`玩家 ${player2} 答對的題數: ${player2CorrectCount}`);
+        console.log(`總共答對的題數: ${totalCorrect}`);
+
+        // 傳送比對結果 & 總答對數
+        io.to(roomId).emit("both-answered", {
+            totalCorrect: totalCorrect // 總共答對的題數
+        });
+
+        // 清空房間答案（避免影響下一題）
+        roomAnswers[roomId] = {};
     }
-  });
+});
+
 
   socket.on("get-question-ids", (roomId) => {
     const numbers = Array.from({ length: 251 }, (_, i) => i + 1);

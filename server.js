@@ -137,6 +137,13 @@ app.post("/set-cookie", async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       });
+
+      res.cookie("userName", firstDoc.nickname, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      });
     }
 
     return res.json({ message: "Cookie 設定成功", account, userId });
@@ -151,6 +158,7 @@ app.get("/get-cookie", async (req, res) => {
     return res.json({
       account: req.cookies.userAccount || null,
       id: req.cookies.userId || null,
+      userName:req.cookies.userName || null,
     });
   } catch (error) {
     console.error("取得 Cookie 失敗:", error);

@@ -344,7 +344,7 @@ io.on("connection", (socket) => {
         }
       };
       main();
-      await setDoc(doc(firestore, "bio", bio_id), {
+      await setDoc(doc(firestoreInstance, "bio", bio_id), {
         totalCorrect: totalCorrect, // 總共答對的題數
         createdAt: formatDate(gmt8Time),
         bio_id: bio_id,

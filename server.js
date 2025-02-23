@@ -4,13 +4,13 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc ,addDoc, setDoc } = require("firebase/firestore");
+const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc, addDoc, setDoc } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
-const fs = require( "fs");
-const axios = require( "axios");
-const { Midjourney }= require ("midjourney");
+const fs = require("fs");
+const axios = require("axios");
+const { Midjourney } = require("midjourney");
 const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
@@ -137,7 +137,7 @@ app.post("/set-cookie", async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       });
-
+      console.log(firstDoc)
       res.cookie("userName", firstDoc.nickname, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -158,7 +158,7 @@ app.get("/get-cookie", async (req, res) => {
     return res.json({
       account: req.cookies.userAccount || null,
       id: req.cookies.userId || null,
-      userName:req.cookies.userName || null,
+      userName: req.cookies.userName || null,
     });
   } catch (error) {
     console.error("取得 Cookie 失敗:", error);
@@ -310,16 +310,16 @@ io.on("connection", (socket) => {
           Debug: true,
           Ws: true,
         });
-      
+
         try {
           await client.Connect();
-      
+
           const Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
             console.log("Imagine progress:", progress);
           });
-      
+
           console.log("Imagine result:", Imagine);
-      
+
           // 选择某一张图片进行放大处理
           const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
           const Upscale = await client.Upscale({
@@ -331,18 +331,18 @@ io.on("connection", (socket) => {
               console.log("Upscale progress:", progress);
             },
           });
-      
+
           console.log("Upscale result:", Upscale);
-      
+
           if (Upscale.uri) {
             const imageUrl = Upscale.uri;
             const outputPath = `./output/test_${selectedIndex}.jpg`; // 保存单张图片
-      
+
             // 确保输出目录存在
             if (!fs.existsSync("./output")) {
               fs.mkdirSync("./output");
             }
-      
+
             console.log("Downloading image...");
             await downloadImage(imageUrl, outputPath);
             console.log(`Image saved to ${outputPath}`);

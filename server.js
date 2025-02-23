@@ -22,8 +22,6 @@ function generateRandomQuestions() {
   }
   return numbers.slice(0, 5); // 取前5个
 }
-import { query, where, getDocs } from "firebase/firestore";
-
 
 const formatDate = (date) => {
   const day = String(date.getDate()).padStart(2, "0");

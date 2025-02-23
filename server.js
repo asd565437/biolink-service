@@ -28,7 +28,7 @@ const formatDate = (date) => {
   const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从 0 开始
   const year = String(date.getFullYear()).slice(-2); // 取后两位
 
-  return `${day}/${month}/${year}`;
+  return `${day}.${month}.${year}`;
 };
 
 const addFriend = async (userId, friendId) => {
@@ -195,6 +195,8 @@ io.on("connection", (socket) => {
 
   socket.on("agree_friend", ({ userId, friendId }) => {
     addFriend(userId, friendId);
+    io.to(users[userId]).emit("success_add_friend");
+    io.to(users[friendId]).emit("success_add_friend");
     console.log(`用戶 ${userId} 和 ${friendId} 成為好友`);
   });
 

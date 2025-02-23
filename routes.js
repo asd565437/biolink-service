@@ -204,6 +204,7 @@ router.post('/bio', async (req, res) => {
 router.post('/friend', async (req, res) => {
   try {
     const { userId } = req.body;
+    console.log(userId)
     const friends = getFriends(userId);
     res.json({ friends });
   } catch (error) {

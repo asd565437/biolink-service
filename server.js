@@ -138,7 +138,7 @@ app.post("/set-cookie", async (req, res) => {
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       });
       console.log(firstDoc)
-      res.cookie("userName", firstDoc.nickname, {
+      res.cookie("userName", firstDoc.data().nickname, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

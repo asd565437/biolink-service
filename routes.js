@@ -44,9 +44,11 @@ const getFriendInfo = async (userId, friendIdArray) => {
       const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
       if (!snapshot1.empty) {
-        return snapshot1.docs[0].data();
+        const data = snapshot1.docs[0].data();
+        return { friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else if (!snapshot2.empty) {
-        return snapshot2.docs[0].data();
+        const data = snapshot2.docs[0].data();
+        return { friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else {
         return null; // 這個 friendId 不是好友
       }
@@ -60,7 +62,7 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
     if (friendInfo.length > 0) {
       console.log("好友資訊:", friendInfo);
-      return friendInfo;  // 回傳好友信息陣列
+      return friendInfo;  // 回傳特定欄位資料
     } else {
       console.log("沒有找到好友關係");
       return null;
@@ -82,15 +84,17 @@ const getUsersByIds = async (userIds) => {
   const db = getFirestore();
   const usersCollection = collection(db, "player");
 
-  // 🔥 使用 `where("id", "in", userIds)` 查詢
-  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 6))); // 限制最多 10 個 ID
+  // 🔥 Firestore 限制 `where("in", [...])` 最多 10 個 ID，這裡改成 6 個
+  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 6)));
   const usersSnap = await getDocs(usersQuery);
 
   return usersSnap.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      nickname: doc.data().nickname,  // ✅ 只回傳 `nickname`
+      bio_count: doc.data().bio_count // ✅ 只回傳 `bio_count`
   }));
 };
+
 //
 // 📌 用户注册
 //

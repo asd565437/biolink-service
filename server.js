@@ -4,7 +4,7 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, collection, query, where, getFirestore , addDoc} = require("firebase/firestore");
+const { getDocs, collection, query, where, getFirestore, addDoc } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
@@ -148,15 +148,15 @@ app.get("/check_auth", (req, res) => {
 
 app.get('/clear_cookie', (req, res) => {
   res.clearCookie("userAccount", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   });
   res.clearCookie("userId", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-});
+  });
   res.send("userAccount Cookie Cleared");
 });
 
@@ -207,17 +207,18 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
 
-  socket.on("submit_question", ({ roomId, userId ,answer}) => {
+  socket.on("submit_question", ({ roomId, userId, answer }) => {
     if (!roomAnswers[roomId]) {
       roomAnswers[roomId] = {};
-  }
+    }
 
-  roomAnswers[roomId][userId] = answer;
-
-  // 檢查是否兩個玩家都回答了
-  if (Object.keys(roomAnswers[roomId]).length === 2) {
+    roomAnswers[roomId][userId] = answer;
+    console.log(Object.keys(roomAnswers[roomId]).length)
+    // 檢查是否兩個玩家都回答了
+    if (Object.keys(roomAnswers[roomId]).length === 2) {
+      console.log("both-answered")
       io.to(roomId).emit("both-answered", true);
-  }
+    }
   });
 
   socket.on("get-question-ids", (roomId) => {
@@ -227,18 +228,18 @@ io.on("connection", (socket) => {
       [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
-    if(!roomData[roomId])
+    if (!roomData[roomId])
       roomData[roomId] = { question_ids: generateRandomQuestions() };
     console.log(roomData[roomId])
     if (roomData[roomId]) {
       socket.emit("question-ids", roomData[roomId].question_ids);
     }
   });
-  socket.on("leave-room", (roomId,userId) => {
+  socket.on("leave-room", (roomId, userId) => {
     socket.leave(roomId);
     console.log(`用戶 ${userId} 離開房間 ${roomId}`)
     socket.to(roomId).emit("user-left", { id: socket.id, room: roomId });
-});
+  });
 
   socket.on("disconnect", () => {
     Object.keys(users).forEach((key) => {

@@ -4,7 +4,7 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, collection, query, where, getFirestore } = require("firebase/firestore");
+const { getDocs, collection, query, where, getFirestore , addDoc} = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
@@ -22,6 +22,35 @@ function generateRandomQuestions() {
   }
   return numbers.slice(0, 5); // 取前5个
 }
+
+const addFriend = async (userId, friendId) => {
+  const friendsCollection = collection(firestoreInstance, "friends");
+
+  try {
+    // 查询是否已经有好友关系（双向查询）
+    const q1 = query(friendsCollection, where("user1", "==", userId), where("user2", "==", friendId));
+    const q2 = query(friendsCollection, where("user1", "==", friendId), where("user2", "==", userId));
+
+    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+    if (!snapshot1.empty || !snapshot2.empty) {
+      console.log("已经是好友了！");
+      return;
+    }
+
+    // 还不是好友，存入数据库
+    await addDoc(friendsCollection, {
+      user1: userId,
+      user2: friendId,
+      createdAt: new Date(),
+    });
+
+    console.log("好友關係已建立");
+  } catch (error) {
+    console.error("添加好友失败:", error);
+  }
+};
+
 
 // 在服务器启动时预生成
 const questionIdsOnStartup = generateRandomQuestions();
@@ -157,7 +186,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("agree_friend", ({ userId, friendId }) => {
-      console.log(`用戶 ${userId} 和 ${friendId} 成為好友`);
+    addFriend(userId, friendId);
+    console.log(`用戶 ${userId} 和 ${friendId} 成為好友`);
   });
 
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {

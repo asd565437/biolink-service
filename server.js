@@ -312,6 +312,15 @@ io.on("connection", (socket) => {
       const utcTime = new Date(); // 獲取當前 UTC 時間=
       // 🔥 手動加 8 小時
       const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+      // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
+      io.to(roomId).emit("both-answered", {
+        totalCorrect: totalCorrect, // 總共答對的題數
+        createdAt: formatDate(gmt8Time),
+        bio_id: bio_id,
+        players: playersInRoom, // 傳送所有玩家 ID
+        nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
+      });
+      
       const mid = async (totalCorrect) => {
         const client = new Midjourney({
           ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
@@ -400,14 +409,6 @@ io.on("connection", (socket) => {
         nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
       });
 
-      // 傳送比對結果 & 總答對數 & 房間內的所有玩家 ID & 暱稱
-      io.to(roomId).emit("both-answered", {
-        totalCorrect: totalCorrect, // 總共答對的題數
-        createdAt: formatDate(gmt8Time),
-        bio_id: bio_id,
-        players: playersInRoom, // 傳送所有玩家 ID
-        nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
-      });
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};
     }

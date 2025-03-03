@@ -322,11 +322,11 @@ io.on("connection", (socket) => {
           const finalScore = totalCorrect / 2;
           
           if (finalScore >= 0 && finalScore < 2) {
-            Imagine = await client.Imagine("An artistic, abstract representation of a cell nucleus...", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
           } else if (finalScore < 4) {
-            Imagine = await client.Imagine("A dreamy, abstract representation of a nucleus in yellow-green...", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
           } else {
-            Imagine = await client.Imagine("A futuristic, abstract nucleus in red-orange...", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
           }
       
           if (!Imagine) {

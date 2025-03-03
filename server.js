@@ -320,56 +320,66 @@ io.on("connection", (socket) => {
         players: playersInRoom, // 傳送所有玩家 ID
         nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
       });
-      
+
       const mid = async (totalCorrect) => {
         const client = new Midjourney({
-          ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
-          ChannelId: process.env.MID_CHANNEL_ID, // 替换为你的 ChannelId
-          SalaiToken: process.env.MID_SALAI_TOKEN, // 替换为你的 SalaiToken
+          ServerId: process.env.MID_SERVER_ID,
+          ChannelId: process.env.MID_CHANNEL_ID,
+          SalaiToken: process.env.MID_SALAI_TOKEN,
           Debug: false,
           Ws: true,
         });
-
+      
         try {
           await client.Connect();
           let Imagine = null;
           const finalScore = totalCorrect / 2;
+          
           if (finalScore >= 0 && finalScore < 2) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
+            Imagine = await client.Imagine("An artistic, abstract representation of a cell nucleus...", (uri, progress) => {});
+          } else if (finalScore < 4) {
+            Imagine = await client.Imagine("A dreamy, abstract representation of a nucleus in yellow-green...", (uri, progress) => {});
+          } else {
+            Imagine = await client.Imagine("A futuristic, abstract nucleus in red-orange...", (uri, progress) => {});
           }
-          else if (finalScore < 4) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
+      
+          if (!Imagine) {
+            console.error("❌ Failed to generate image.");
+            return null;
           }
-          else {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
-          }
-
-          // 选择某一张图片进行放大处理
-          const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
+      
+          // 选择第一张图片进行放大
+          const selectedIndex = 1;
           const Upscale = await client.Upscale({
             index: selectedIndex,
             msgId: Imagine.id,
             hash: Imagine.hash,
             flags: Imagine.flags,
           });
-
-          if (Upscale.uri) {
-            const imageUrl = Upscale.uri;
-            const fileName = `${bio_id}.png`;
-
-            console.log("Downloading image...");
-            const URL = await downloadAndUploadToS3(imageUrl, fileName);
-            console.log(`Image saved to ${URL}`);
-            io.to(roomId).emit("grenarate_success", { URL });
-            return URL;
+      
+          if (!Upscale || !Upscale.uri) {
+            console.error("❌ Upscale failed or no URI returned.");
+            return null;
           }
+      
+          const imageUrl = Upscale.uri;
+          console.log("Downloading and uploading image...");
+          const fileName = `${bio_id}.png`;
+          const URL = await downloadAndUploadToS3(imageUrl, fileName);
+      
+          if (!URL) {
+            console.error("❌ Image upload to S3 failed.");
+            return null;
+          }
+      
+          console.log(`✅ Image uploaded: ${URL}`);
+          return URL;
         } catch (error) {
-          console.error("Error:", error);
+          console.error("❌ Error in mid function:", error);
+          return null;
         }
       };
+      
 
       const downloadAndUploadToS3 = async (imageUrl, fileName) => {
         try {
@@ -398,16 +408,23 @@ io.on("connection", (socket) => {
         }
       };
       const URL = await mid(totalCorrect);
-
-
-      await setDoc(doc(firestoreInstance, "bio", bio_id), {
-        imageUrl: URL,
-        totalCorrect: totalCorrect, // 總共答對的題數
+      console.log("Final image URL:", URL);
+      
+      const data = {
+        totalCorrect: totalCorrect, // 总共答对的题数
         createdAt: formatDate(gmt8Time),
         bio_id: bio_id,
-        players: playersInRoom, // 傳送所有玩家 ID
-        nicknames: playerNicknames, // 🔥 傳送所有玩家的 nickname
-      });
+        players: playersInRoom, // 传送所有玩家 ID
+        nicknames: playerNicknames, // 传送所有玩家的昵称
+      };
+      
+      // 只有在 URL 有效时才加入 `imageURL`
+      if (URL) {
+        data.imageURL = URL;
+      }
+      
+      await setDoc(doc(firestoreInstance, "bio", bio_id), data);
+      
 
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};

@@ -14,7 +14,7 @@ const { Midjourney } = require("midjourney");
 const app = express();
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
-
+const { S3Client, ListBucketsCommand } = require("@aws-sdk/client-s3");
 
 function generateRandomQuestions() {
   const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
@@ -343,6 +343,24 @@ io.on("connection", (socket) => {
           console.error("Error:", error);
         }
       };
+      const s3 = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+      });
+
+      const testS3Connection = async () => {
+        try {
+          const data = await s3.send(new ListBucketsCommand({}));
+          console.log("S3 Buckets:", data.Buckets);
+        } catch (error) {
+          console.error("S3 Connection Error:", error);
+        }
+      };
+
+      testS3Connection();
       main();
       await setDoc(doc(firestoreInstance, "bio", bio_id), {
         totalCorrect: totalCorrect, // 總共答對的題數

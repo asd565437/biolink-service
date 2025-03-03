@@ -24,7 +24,7 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-const mid = async () => {
+const mid = async (totalCorrect) => {
   const client = new Midjourney({
     ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
     ChannelId: process.env.MID_CHANNEL_ID, // 替换为你的 ChannelId
@@ -36,6 +36,7 @@ const mid = async () => {
   try {
     await client.Connect();
     let Imagine = null;
+    const finalScore = totalCorrect / 2;
     if (finalScore >= 0 && finalScore < 2) {
       Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
       });
@@ -383,13 +384,12 @@ io.on("connection", (socket) => {
       console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
       console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
       console.log(`總共答對的題數: ${totalCorrect}`);
-      const finalScore = totalCorrect / 2;
 
       const utcTime = new Date(); // 獲取當前 UTC 時間=
       // 🔥 手動加 8 小時
       const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
 
-    const URL = mid();
+    const URL = await mid(totalCorrect);
 
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), {

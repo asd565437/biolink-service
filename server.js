@@ -307,6 +307,8 @@ io.on("connection", (socket) => {
       console.log(`玩家 ${player1} (${playerNicknames[player1]}) 答對的題數: ${player1CorrectCount}`);
       console.log(`玩家 ${player2} (${playerNicknames[player2]}) 答對的題數: ${player2CorrectCount}`);
       console.log(`總共答對的題數: ${totalCorrect}`);
+      const finalScore = totalCorrect / 2;
+
       const utcTime = new Date(); // 獲取當前 UTC 時間=
       // 🔥 手動加 8 小時
       const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
@@ -321,9 +323,20 @@ io.on("connection", (socket) => {
 
         try {
           await client.Connect();
+          const Imagine = null;
+          if (finalScore >= 0 && finalScore < 2) {
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+            });
+          }
+          else if (finalScore < 4) {
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+            });
+          }
+          else {
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+            });
+          }
 
-          const Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-          });
 
           // 选择某一张图片进行放大处理
           const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
@@ -336,7 +349,7 @@ io.on("connection", (socket) => {
 
           if (Upscale.uri) {
             const imageUrl = Upscale.uri;
-            const fileName = `${bio_id}`;
+            const fileName = `${bio_id}.png`;
 
             console.log("Downloading image...");
             const URL = await downloadAndUploadToS3(imageUrl, fileName);
@@ -351,7 +364,6 @@ io.on("connection", (socket) => {
       const downloadAndUploadToS3 = async (imageUrl, fileName) => {
         try {
           console.log(`Downloading image from Midjourney: ${imageUrl}`);
-
           // 下載圖片
           const response = await axios({
             url: imageUrl,

@@ -354,6 +354,7 @@ io.on("connection", (socket) => {
             console.log("Downloading image...");
             const URL = await downloadAndUploadToS3(imageUrl, fileName);
             console.log(`Image saved to ${URL}`);
+            io.to(users[to]).emit("grenarate_success", {URL});
           }
         } catch (error) {
           console.error("Error:", error);

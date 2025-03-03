@@ -12,10 +12,18 @@ const fs = require("fs");
 const axios = require("axios");
 const { Midjourney } = require("midjourney");
 const app = express();
+const multer = require("multer");
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 const { S3Client, ListBucketsCommand } = require("@aws-sdk/client-s3");
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 function generateRandomQuestions() {
   const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
   for (let i = numbers.length - 1; i > 0; i--) {
@@ -328,57 +336,48 @@ io.on("connection", (socket) => {
 
           if (Upscale.uri) {
             const imageUrl = Upscale.uri;
-            const outputPath = `./output/test_${selectedIndex}.jpg`; // 保存单张图片
-
-            // 确保输出目录存在
-            if (!fs.existsSync("./output")) {
-              fs.mkdirSync("./output");
-            }
+            const fileName = `output/${bio_id}`;
 
             console.log("Downloading image...");
-            await downloadImage(imageUrl, outputPath);
-            console.log(`Image saved to ${outputPath}`);
+            await downloadAndUploadToS3(imageUrl, fileName);
+            console.log(`Image saved to ${fileName}`);
           }
         } catch (error) {
           console.error("Error:", error);
         }
       };
-      const { S3Client, ListObjectsCommand } = require("@aws-sdk/client-s3");
+      main();
 
-      const s3 = new S3Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
-      });
-      
-      const listDirectoryFiles = async (directory) => {
-        const params = {
-          Bucket: process.env.AWS_BUCKET_NAME,
-          Prefix: `${directory}/`, // 指定 S3 內的「目錄」（其實是 Prefix）
-        };
-      
+      const downloadAndUploadToS3 = async (imageUrl, fileName) => {
         try {
-          const data = await s3.send(new ListObjectsCommand(params));
-      
-          if (!data.Contents || data.Contents.length === 0) {
-            console.log(`🚀 目錄 "${directory}" 內沒有任何文件`);
-          } else {
-            console.log(`🚀 目錄 "${directory}" 內的文件:`);
-            data.Contents.forEach((file) => {
-              console.log(`📄 ${file.Key} (大小: ${file.Size} bytes)`);
-            });
-          }
+          console.log(`Downloading image from Midjourney: ${imageUrl}`);
+
+          // 下載圖片
+          const response = await axios({
+            url: imageUrl,
+            responseType: "arraybuffer",
+          });
+
+          // 設定 S3 上傳參數
+          const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: `midjourney/${fileName}`, // 設定存入 S3 的文件名稱
+            Body: Buffer.from(response.data),
+            ContentType: "image/jpeg", // 或 "image/png"
+          };
+
+          // 上傳到 S3
+          await s3.send(new PutObjectCommand(params));
+
+          console.log(`✅ Image uploaded to S3: https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`);
+
+          return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`;
         } catch (error) {
-          console.error("❌ S3 讀取錯誤:", error);
+          console.error("❌ Upload to S3 failed:", error);
+          return null;
         }
       };
-      
-      // 測試列出 uploads 目錄內的所有文件
-      listDirectoryFiles("output");
-      
-      main();
+
       await setDoc(doc(firestoreInstance, "bio", bio_id), {
         totalCorrect: totalCorrect, // 總共答對的題數
         createdAt: formatDate(gmt8Time),

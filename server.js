@@ -307,7 +307,7 @@ io.on("connection", (socket) => {
           ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
           ChannelId: process.env.MID_CHANNEL_ID, // 替换为你的 ChannelId
           SalaiToken: process.env.MID_SALAI_TOKEN, // 替换为你的 SalaiToken
-          Debug: true,
+          Debug: false,
           Ws: true,
         });
 

@@ -15,7 +15,7 @@ const app = express();
 const multer = require("multer");
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
-const { S3Client, ListBucketsCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,

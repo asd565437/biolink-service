@@ -24,6 +24,82 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
+const mid = async () => {
+  const client = new Midjourney({
+    ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
+    ChannelId: process.env.MID_CHANNEL_ID, // 替换为你的 ChannelId
+    SalaiToken: process.env.MID_SALAI_TOKEN, // 替换为你的 SalaiToken
+    Debug: false,
+    Ws: true,
+  });
+
+  try {
+    await client.Connect();
+    let Imagine = null;
+    if (finalScore >= 0 && finalScore < 2) {
+      Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+      });
+    }
+    else if (finalScore < 4) {
+      Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+      });
+    }
+    else {
+      Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
+      });
+    }
+
+    // 选择某一张图片进行放大处理
+    const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
+    const Upscale = await client.Upscale({
+      index: selectedIndex,
+      msgId: Imagine.id,
+      hash: Imagine.hash,
+      flags: Imagine.flags,
+    });
+
+    if (Upscale.uri) {
+      const imageUrl = Upscale.uri;
+      const fileName = `${bio_id}.png`;
+
+      console.log("Downloading image...");
+      const URL = await downloadAndUploadToS3(imageUrl, fileName);
+      console.log(`Image saved to ${URL}`);
+      io.to(roomId).emit("grenarate_success", {URL});
+      return URL;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
+const downloadAndUploadToS3 = async (imageUrl, fileName) => {
+  try {
+    console.log(`Downloading image from Midjourney: ${imageUrl}`);
+    // 下載圖片
+    const response = await axios({
+      url: imageUrl,
+      responseType: "arraybuffer",
+    });
+
+    // 設定 S3 上傳參數
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `midjourney/${fileName}`, // 設定存入 S3 的文件名稱
+      Body: Buffer.from(response.data),
+      ContentType: "image/jpeg", // 或 "image/png"
+    };
+
+    // 上傳到 S3
+    await s3.send(new PutObjectCommand(params));
+
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`;
+  } catch (error) {
+    console.error("❌ Upload to S3 failed:", error);
+    return null;
+  }
+};
+
 function generateRandomQuestions() {
   const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
   for (let i = numbers.length - 1; i > 0; i--) {
@@ -312,84 +388,12 @@ io.on("connection", (socket) => {
       const utcTime = new Date(); // 獲取當前 UTC 時間=
       // 🔥 手動加 8 小時
       const gmt8Time = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
-      const main = async () => {
-        const client = new Midjourney({
-          ServerId: process.env.MID_SERVER_ID, // 替换为你的 ServerId
-          ChannelId: process.env.MID_CHANNEL_ID, // 替换为你的 ChannelId
-          SalaiToken: process.env.MID_SALAI_TOKEN, // 替换为你的 SalaiToken
-          Debug: false,
-          Ws: true,
-        });
 
-        try {
-          await client.Connect();
-          let Imagine = null;
-          if (finalScore >= 0 && finalScore < 2) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
-          }
-          else if (finalScore < 4) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
-          }
-          else {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
-            });
-          }
+    const URL = mid();
 
-
-          // 选择某一张图片进行放大处理
-          const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
-          const Upscale = await client.Upscale({
-            index: selectedIndex,
-            msgId: Imagine.id,
-            hash: Imagine.hash,
-            flags: Imagine.flags,
-          });
-
-          if (Upscale.uri) {
-            const imageUrl = Upscale.uri;
-            const fileName = `${bio_id}.png`;
-
-            console.log("Downloading image...");
-            const URL = await downloadAndUploadToS3(imageUrl, fileName);
-            console.log(`Image saved to ${URL}`);
-            io.to(roomId).emit("grenarate_success", {URL});
-          }
-        } catch (error) {
-          console.error("Error:", error);
-        }
-      };
-      main();
-
-      const downloadAndUploadToS3 = async (imageUrl, fileName) => {
-        try {
-          console.log(`Downloading image from Midjourney: ${imageUrl}`);
-          // 下載圖片
-          const response = await axios({
-            url: imageUrl,
-            responseType: "arraybuffer",
-          });
-
-          // 設定 S3 上傳參數
-          const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: `midjourney/${fileName}`, // 設定存入 S3 的文件名稱
-            Body: Buffer.from(response.data),
-            ContentType: "image/jpeg", // 或 "image/png"
-          };
-
-          // 上傳到 S3
-          await s3.send(new PutObjectCommand(params));
-
-          return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`;
-        } catch (error) {
-          console.error("❌ Upload to S3 failed:", error);
-          return null;
-        }
-      };
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), {
+        imageUrl: URL,
         totalCorrect: totalCorrect, // 總共答對的題數
         createdAt: formatDate(gmt8Time),
         bio_id: bio_id,

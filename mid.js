@@ -32,9 +32,7 @@ const main = async () => {
     const Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {
       console.log("Imagine progress:", progress);
     });
-
-    console.log("Imagine result:", Imagine);
-
+    
     // 选择某一张图片进行放大处理
     const selectedIndex = 1; // 选择第 1 张图片（索引从 1 开始）
     const Upscale = await client.Upscale({
@@ -42,9 +40,6 @@ const main = async () => {
       msgId: Imagine.id,
       hash: Imagine.hash,
       flags: Imagine.flags,
-      loading: (uri, progress) => {
-        console.log("Upscale progress:", progress);
-      },
     });
 
     console.log("Upscale result:", Upscale);

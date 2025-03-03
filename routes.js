@@ -256,7 +256,7 @@ router.post('/bio', async (req, res) => {
     );
 
     const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);
-    console.log(bios)
+    console.log(userId+":"+bios)
     res.json({ bios });
   } catch (error) {
     console.error('Error fetching bios:', error);

@@ -343,6 +343,8 @@ io.on("connection", (socket) => {
           console.error("Error:", error);
         }
       };
+      const { S3Client, ListObjectsCommand } = require("@aws-sdk/client-s3");
+
       const s3 = new S3Client({
         region: process.env.AWS_REGION,
         credentials: {
@@ -350,17 +352,32 @@ io.on("connection", (socket) => {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         },
       });
-
-      const testS3Connection = async () => {
+      
+      const listDirectoryFiles = async (directory) => {
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Prefix: `${directory}/`, // 指定 S3 內的「目錄」（其實是 Prefix）
+        };
+      
         try {
-          const data = await s3.send(new ListBucketsCommand({}));
-          console.log("S3 Buckets:", data.Buckets);
+          const data = await s3.send(new ListObjectsCommand(params));
+      
+          if (!data.Contents || data.Contents.length === 0) {
+            console.log(`🚀 目錄 "${directory}" 內沒有任何文件`);
+          } else {
+            console.log(`🚀 目錄 "${directory}" 內的文件:`);
+            data.Contents.forEach((file) => {
+              console.log(`📄 ${file.Key} (大小: ${file.Size} bytes)`);
+            });
+          }
         } catch (error) {
-          console.error("S3 Connection Error:", error);
+          console.error("❌ S3 讀取錯誤:", error);
         }
       };
-
-      testS3Connection();
+      
+      // 測試列出 uploads 目錄內的所有文件
+      listDirectoryFiles("output");
+      
       main();
       await setDoc(doc(firestoreInstance, "bio", bio_id), {
         totalCorrect: totalCorrect, // 總共答對的題數

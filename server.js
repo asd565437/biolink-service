@@ -336,11 +336,11 @@ io.on("connection", (socket) => {
 
           if (Upscale.uri) {
             const imageUrl = Upscale.uri;
-            const fileName = `output/${bio_id}`;
+            const fileName = `/${bio_id}`;
 
             console.log("Downloading image...");
-            await downloadAndUploadToS3(imageUrl, fileName);
-            console.log(`Image saved to ${fileName}`);
+            const URL = await downloadAndUploadToS3(imageUrl, fileName);
+            console.log(`Image saved to ${URL}`);
           }
         } catch (error) {
           console.error("Error:", error);
@@ -368,8 +368,6 @@ io.on("connection", (socket) => {
 
           // 上傳到 S3
           await s3.send(new PutObjectCommand(params));
-
-          console.log(`✅ Image uploaded to S3: https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`);
 
           return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`;
         } catch (error) {

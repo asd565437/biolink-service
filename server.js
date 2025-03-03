@@ -34,20 +34,6 @@ function generateRandomQuestions() {
   return numbers.slice(0, 5); // 取前5个
 }
 
-const downloadImage = async (url, filepath) => {
-  const response = await axios({
-    url,
-    method: "GET",
-    responseType: "stream",
-  });
-
-  return new Promise((resolve, reject) => {
-    const writer = fs.createWriteStream(filepath);
-    response.data.pipe(writer);
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
-};
 
 
 const formatDate = (date) => {
@@ -424,7 +410,7 @@ io.on("connection", (socket) => {
       }
       
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
-      
+      io.to(roomId).emit("grenarate_success", {URL});
 
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};

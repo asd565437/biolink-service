@@ -336,7 +336,7 @@ io.on("connection", (socket) => {
 
           if (Upscale.uri) {
             const imageUrl = Upscale.uri;
-            const fileName = `/${bio_id}`;
+            const fileName = `${bio_id}`;
 
             console.log("Downloading image...");
             const URL = await downloadAndUploadToS3(imageUrl, fileName);

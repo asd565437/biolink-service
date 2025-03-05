@@ -24,11 +24,12 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-async function sendFilePath(filePath) {
+async function sendFilePath(filePath,fileName) {
   console.log(filePath)
   try {
     const response = await axios.post(`https://biolink-py-server.onrender.com/process`,
       { file_path: filePath },  // 傳送 JSON
+      { file_name: fileName },
       { headers: { "Content-Type": "application/json" } }  // 確保是 JSON
   );
       console.log("Flask 回應:", response.data);
@@ -360,10 +361,9 @@ io.on("connection", (socket) => {
             return null;
           }
           const imageUrl = Upscale.uri;
-          sendFilePath(imageUrl);
+          const fileName = `${bio_id}`;
           console.log("Downloading and uploading image...");
-          const fileName = `${bio_id}.png`;
-          const URL = await downloadAndUploadToS3(imageUrl, fileName);
+          await sendFilePath(imageUrl,fileName);
       
           if (!URL) {
             console.error("❌ Image upload to S3 failed.");
@@ -378,32 +378,6 @@ io.on("connection", (socket) => {
         }
       };
 
-      const downloadAndUploadToS3 = async (imageUrl, fileName) => {
-        try {
-          console.log(`Downloading image from Midjourney: ${imageUrl}`);
-          // 下載圖片
-          const response = await axios({
-            url: imageUrl,
-            responseType: "arraybuffer",
-          });
-
-          // 設定 S3 上傳參數
-          const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: `midjourney/${fileName}`, // 設定存入 S3 的文件名稱
-            Body: Buffer.from(response.data),
-            ContentType: "image/jpeg", // 或 "image/png"
-          };
-
-          // 上傳到 S3
-          await s3.send(new PutObjectCommand(params));
-
-          return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/midjourney/${fileName}`;
-        } catch (error) {
-          console.error("❌ Upload to S3 failed:", error);
-          return null;
-        }
-      };
       const URL = await mid(totalCorrect);
       console.log("Final image URL:", URL);
       

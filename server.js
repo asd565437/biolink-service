@@ -33,6 +33,7 @@ async function sendFilePath(filePath,fileName) {
       { headers: { "Content-Type": "application/json" } }  // 確保是 JSON
   );
       console.log("Flask 回應:", response.data);
+      return response.data.file_path;
   } catch (error) {
       console.error("請求 Flask 時發生錯誤:", error.message);
   }
@@ -378,7 +379,7 @@ io.on("connection", (socket) => {
         }
       };
 
-      const URL = await mid(totalCorrect);
+      let URL = await mid(totalCorrect);
       console.log("Final image URL:", URL);
       
       const data = {

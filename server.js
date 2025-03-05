@@ -24,7 +24,17 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
+async function sendFilePath(filePath) {
+  try {
+      const response = await axios.post(`https://biolink-py-server.onrender.com/process`, {
+          file_path: filePath
+      });
 
+      console.log("Flask 回應:", response.data);
+  } catch (error) {
+      console.error("請求 Flask 時發生錯誤:", error.message);
+  }
+}
 function generateRandomQuestions() {
   const numbers = Array.from({ length: 251 }, (_, i) => i + 1);
   for (let i = numbers.length - 1; i > 0; i--) {
@@ -88,6 +98,7 @@ app.use(
       "http://localhost:3000",
       "https://biolink-service.onrender.com",
       "https://biolink-zsl3.onrender.com",
+      "https://biolink-py-server.onrender.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -347,8 +358,8 @@ io.on("connection", (socket) => {
             console.error("❌ Upscale failed or no URI returned.");
             return null;
           }
-      
           const imageUrl = Upscale.uri;
+          sendFilePath(imageUrl);
           console.log("Downloading and uploading image...");
           const fileName = `${bio_id}.png`;
           const URL = await downloadAndUploadToS3(imageUrl, fileName);
@@ -365,7 +376,6 @@ io.on("connection", (socket) => {
           return null;
         }
       };
-      
 
       const downloadAndUploadToS3 = async (imageUrl, fileName) => {
         try {

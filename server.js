@@ -27,9 +27,10 @@ const s3 = new S3Client({
 async function sendFilePath(filePath) {
   console.log(filePath)
   try {
-      const response = await axios.post(`https://biolink-py-server.onrender.com/process`, {
-          file_path: filePath
-      });
+    const response = await axios.post(`https://biolink-py-server.onrender.com/process`,
+      { file_path: filePath },  // 傳送 JSON
+      { headers: { "Content-Type": "application/json" } }  // 確保是 JSON
+  );
       console.log("Flask 回應:", response.data);
   } catch (error) {
       console.error("請求 Flask 時發生錯誤:", error.message);

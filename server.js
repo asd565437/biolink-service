@@ -364,7 +364,7 @@ io.on("connection", (socket) => {
           const imageUrl = Upscale.uri;
           const fileName = `${bio_id}`;
           console.log("Downloading and uploading image...");
-          await sendFilePath(imageUrl,fileName);
+          let URL = await sendFilePath(imageUrl,fileName);
       
           if (!URL) {
             console.error("❌ Image upload to S3 failed.");

@@ -25,13 +25,17 @@ const s3 = new S3Client({
   },
 });
 async function sendFilePath(filePath,fileName) {
-  console.log(filePath)
+  console.log(fileName)
   try {
-    const response = await axios.post(`https://biolink-py-server.onrender.com/process`,
-      { file_path: filePath },  // 傳送 JSON
-      { file_name: fileName },
-      { headers: { "Content-Type": "application/json" } }  // 確保是 JSON
-  );
+    const response = await axios.post(
+      "https://biolink-py-server.onrender.com/process",
+      { 
+        file_path: filePath,  // 正確的 JSON 結構
+        file_name: fileName
+      },
+      { headers: { "Content-Type": "application/json" } } // 配置 headers
+    );
+    
       console.log("Flask 回應:", response.data);
       return response.data.file_path;
   } catch (error) {

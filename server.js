@@ -29,7 +29,7 @@ async function sendFilePath(filePath) {
       const response = await axios.post(`https://biolink-py-server.onrender.com/process`, {
           file_path: filePath
       });
-
+      console.log(filePath)
       console.log("Flask 回應:", response.data);
   } catch (error) {
       console.error("請求 Flask 時發生錯誤:", error.message);

@@ -24,22 +24,21 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-async function sendFilePath(filePath,fileName) {
-  console.log(fileName)
+async function sendFilePath(filePath, fileName) {
   try {
     const response = await axios.post(
       "https://biolink-py-server.onrender.com/process",
-      { 
+      {
         file_path: filePath,  // 正確的 JSON 結構
         file_name: fileName
       },
       { headers: { "Content-Type": "application/json" } } // 配置 headers
     );
-    
-      console.log("Flask 回應:", response.data);
-      return response.data.file_path;
+
+    console.log("Flask 回應:", response.data);
+    return response.data.file_path;
   } catch (error) {
-      console.error("請求 Flask 時發生錯誤:", error.message);
+    console.error("請求 Flask 時發生錯誤:", error.message);
   }
 }
 function generateRandomQuestions() {
@@ -246,6 +245,15 @@ io.on("connection", (socket) => {
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
+  let sharedText = "";
+  // 當用戶發送更新
+  socket.on("editText", (newText) => {
+    sharedText = newText;
+    console.log("文字更新:", sharedText);
+
+    // 廣播給所有連線的用戶
+    io.emit("updateText", sharedText);
+  });
 
   socket.on("submit_question", async ({ roomId, userId, answers }) => {
     if (!roomAnswers[roomId]) {
@@ -333,25 +341,25 @@ io.on("connection", (socket) => {
           Debug: false,
           Ws: true,
         });
-      
+
         try {
           await client.Connect();
           let Imagine = null;
           const finalScore = totalCorrect / 2;
-          
+
           if (finalScore >= 0 && finalScore < 2) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of blue and purple. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => { });
           } else if (finalScore < 4) {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of yellow and green. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => { });
           } else {
-            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => {});
+            Imagine = await client.Imagine("An artistic, abstract representation of the organic pattern of a cell nucleus in a petri dish. The design is characterized by soft radiating structures, concentric layers and delicate flowing textures. The style is dreamy and futuristic, with gradient shades of red and orange. The compositions of the works emphasize elegance and harmony, with subtle luminous effects and fine-grained or dotted textures that avoid any resemblance to real bacteria or microorganisms. The result feels ethereal, minimalistic, and inspired by nature’s fluid patterns and cosmic aesthetics.", (uri, progress) => { });
           }
-      
+
           if (!Imagine) {
             console.error("❌ Failed to generate image.");
             return null;
           }
-      
+
           // 选择第一张图片进行放大
           const selectedIndex = 1;
           const Upscale = await client.Upscale({
@@ -360,7 +368,7 @@ io.on("connection", (socket) => {
             hash: Imagine.hash,
             flags: Imagine.flags,
           });
-      
+
           if (!Upscale || !Upscale.uri) {
             console.error("❌ Upscale failed or no URI returned.");
             return null;
@@ -368,13 +376,13 @@ io.on("connection", (socket) => {
           const imageUrl = Upscale.uri;
           const fileName = `${bio_id}`;
           console.log("Downloading and uploading image...");
-          let URL = await sendFilePath(imageUrl,fileName);
-      
+          let URL = await sendFilePath(imageUrl, fileName);
+
           if (!URL) {
             console.error("❌ Image upload to S3 failed.");
             return null;
           }
-      
+
           console.log(`✅ Image uploaded: ${URL}`);
           return URL;
         } catch (error) {
@@ -385,7 +393,7 @@ io.on("connection", (socket) => {
 
       let URL = await mid(totalCorrect);
       console.log("Final image URL:", URL);
-      
+
       const data = {
         totalCorrect: totalCorrect, // 总共答对的题数
         createdAt: formatDate(gmt8Time),
@@ -393,14 +401,14 @@ io.on("connection", (socket) => {
         players: playersInRoom, // 传送所有玩家 ID
         nicknames: playerNicknames, // 传送所有玩家的昵称
       };
-      
+
       // 只有在 URL 有效时才加入 `imageURL`
       if (URL) {
         data.imageURL = URL;
       }
-      
+
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
-      io.to(roomId).emit("grenarate_success", {URL});
+      io.to(roomId).emit("grenarate_success", { URL });
 
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};

@@ -283,6 +283,7 @@ router.get('/get_all_bio', async (req, res) => {
         id: doc.data().bio_id || `${index + 1}`,
       },
     }));
+    console.log(bios)
     res.json({ bios });
   } catch (error) {
     console.error('Error fetching bios:', error);

@@ -263,6 +263,20 @@ router.post('/bio', async (req, res) => {
   }
 });
 
+router.get('/get_all_bio', async (req, res) => {
+  try {
+    const biosSnap = await getDocs(collection(firestoreInstance, "bio"));
+    const bios = biosSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    res.json({ bios });
+  } catch (error) {
+    console.error('Error fetching bios:', error);
+    res.status(500).json({ error: 'Failed to fetch bios' });
+  }
+});
+
 //
 // 📌 获取好友信息
 //

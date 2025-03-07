@@ -239,12 +239,19 @@ io.on("connection", (socket) => {
     io.to(users[friendId]).emit("success_add_friend");
     console.log(`用戶 ${userId} 和 ${friendId} 成為好友`);
   });
+  socket.on("reject_friend", ({ friendId }) => {
+    io.to(users[friendId]).emit("reject_friend");
+  });
 
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
+  socket.on("reject-invite", ({ friendId, roomId, userId }) => {
+    io.to(users[friendId]).emit("reject-invite");
+  });
+
   let sharedText = "";
   // 當用戶發送更新
   socket.on("editText", (newText) => {

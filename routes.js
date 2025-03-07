@@ -295,7 +295,7 @@ router.post('/get_all_bio', async (req, res) => {
       src: `https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/${doc.id}.png`, // 假設你仍然使用 bio_01 ~ bio_07
       x: Math.random() * innerWidth - innerWidth / 2,
       y: Math.random() * innerHeight - innerHeight,
-      z: Math.random() * (998 - 1) + 1,
+      z: Math.random() * (900 - 1) + 1,
       scale: Math.random() * (0.13 - 0.05) + 0.05,
       speedX: Math.random() * 1.5,
       speedY: Math.random() * 1.5,

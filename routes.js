@@ -266,9 +266,22 @@ router.post('/bio', async (req, res) => {
 router.get('/get_all_bio', async (req, res) => {
   try {
     const biosSnap = await getDocs(collection(firestoreInstance, "bio"));
-    const bios = biosSnap.docs.map((doc) => ({
+    const bios = biosSnap.docs.map((doc, index) => ({
       id: doc.id,
-      ...doc.data(),
+      src: `https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/${doc.id}.png`, // 假設你仍然使用 bio_01 ~ bio_07
+      x: Math.random() * window.innerWidth - window.innerWidth / 2,
+      y: Math.random() * window.innerHeight - window.innerHeight,
+      scale: Math.random() * (0.13 - 0.05) + 0.05,
+      speed: Math.random() * 1.5,
+      directionX: Math.random() < 0.5 ? -1 : 1, // 隨機方向
+      directionY: Math.random() < 0.5 ? -1 : 1,
+      rotation: Math.random() * 360,
+      rotationSpeed: Math.random() * 0.7,
+      info: {
+        keeper: doc.data().nicknames[doc.data().players[0]]+"&"+doc.data().nicknames[doc.data().players[1]] || `培養員 ${index + 1}`,
+        createdAt: doc.data().createdAt || `2025-0${(index % 9) + 1}-01`,
+        id: doc.data().bio_id || `${index + 1}`,
+      },
     }));
     res.json({ bios });
   } catch (error) {

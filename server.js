@@ -249,6 +249,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });
   socket.on("reject-invite", ({ friendId, roomId, userId }) => {
+    console.log("reject")
     io.to(users[friendId]).emit("reject-invite");
   });
 

@@ -243,22 +243,22 @@ io.on("connection", (socket) => {
     io.to(users[friendId]).emit("reject_friend");
   });
   socket.on("submit_name", ({ userId }) => {
-    roomSubmitName[roomId][userId] = true; // 更新用户状态
-    checkAllTriggered()
+    const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
+    roomSubmitName[userRooms][userId] = true; // 更新用户状态
+    checkAllTriggered(userRooms);
   });
 
   // 检查房间内所有用户是否都触发机关
-function checkAllTriggered() {
-  const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
-  console.log(userRooms)
-  const users = roomSubmitName[userRooms];
+function checkAllTriggered(roomId) {
+  console.log(roomId)
+  const users = roomSubmitName[roomId];
   if (!users) return;
 
   const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
 
   if (allTriggered) {
-      io.to(userRooms).emit("both-submit"); // 广播房间内所有人机关已触发
-      console.log(`All users in room ${userRooms} triggered the mechanism!`);
+      io.to(roomId).emit("both-submit"); // 广播房间内所有人机关已触发
+      console.log(`All users in room ${roomId} triggered the mechanism!`);
   }
 }
 

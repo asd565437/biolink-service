@@ -242,15 +242,15 @@ io.on("connection", (socket) => {
   socket.on("reject_friend", ({ friendId }) => {
     io.to(users[friendId]).emit("reject_friend");
   });
-  socket.on("submit_name", ({ userId }) => {
+  socket.on("submit_name", ({ userId ,bio_id, strainName}) => {
     const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
     roomSubmitName[userRooms][userId] = true; // 更新用户状态
     console.log(roomSubmitName)
-    checkAllTriggered(userRooms);
+    checkAllTriggered(userRooms, bio_id ,strainName);
   });
 
   // 检查房间内所有用户是否都触发机关
-function checkAllTriggered(roomId) {
+function checkAllTriggered(roomId ,bio_id, strainName) {
   const users = roomSubmitName[roomId];
   if (!users) return;
 
@@ -258,7 +258,14 @@ function checkAllTriggered(roomId) {
 
   if (allTriggered) {
       io.to(roomId).emit("both-submit"); // 广播房间内所有人机关已触发
-      console.log(`All users in room ${roomId} triggered the mechanism!`);
+      const docRef = firestoreInstance.collection("bio").doc(bio_id);
+      updateDoc(docRef, {
+        name:strainName
+    }).then(() => {
+        console.log("字段已成功添加");
+    }).catch((error) => {
+        console.error("更新失败:", error);
+    });
   }
 }
 
@@ -267,7 +274,6 @@ function checkAllTriggered(roomId) {
     if (!roomSubmitName[roomId]) {
       roomSubmitName[roomId] = {};
     }
-    console.log(roomSubmitName)
     roomSubmitName[roomId][friendId] = false; // 初始状态：未触发机关
     roomSubmitName[roomId][userId] = false; // 初始状态：未触发机关
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
@@ -281,8 +287,6 @@ function checkAllTriggered(roomId) {
   // 當用戶發送更新
   socket.on("editText", (newText) => {
     sharedText = newText;
-    console.log("文字更新:", sharedText);
-
     // 廣播給所有連線的用戶
     io.emit("updateText", sharedText);
   });
@@ -440,7 +444,7 @@ function checkAllTriggered(roomId) {
       }
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
-      io.to(roomId).emit("grenarate_success", { URL });
+      io.to(roomId).emit("grenarate_success", { URL, bio_id});
 
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};

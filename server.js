@@ -444,6 +444,7 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
       }
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
+      console.log("447"+bio_id)
       io.to(roomId).emit("grenarate_success", { URL, bio_id});
 
       // 清空房間答案（避免影響下一題）

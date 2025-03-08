@@ -245,6 +245,7 @@ io.on("connection", (socket) => {
   socket.on("submit_name", ({ userId }) => {
     const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
     roomSubmitName[userRooms][userId] = true; // 更新用户状态
+    console.log(roomSubmitName)
     checkAllTriggered(userRooms);
   });
 

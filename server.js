@@ -149,7 +149,6 @@ app.post("/set-cookie", async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       });
-      console.log(firstDoc)
       res.cookie("userName", firstDoc.data().nickname, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -211,6 +210,7 @@ const io = new Server(server, {
 
 let users = {};
 let roomAnswers = {}; // 追蹤每個房間的回答情況
+let roomSubmitName = {};
 io.on("connection", (socket) => {
   console.log("Socket.IO 連線成功:", socket.id);
 
@@ -242,9 +242,33 @@ io.on("connection", (socket) => {
   socket.on("reject_friend", ({ friendId }) => {
     io.to(users[friendId]).emit("reject_friend");
   });
+  socket.on("submit_name", ({ userId }) => {
+    roomSubmitName[roomId][userId] = true; // 更新用户状态
+    checkAllTriggered()
+  });
+
+  // 检查房间内所有用户是否都触发机关
+function checkAllTriggered() {
+  const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
+  console.log(userRooms)
+  const users = roomSubmitName[userRooms];
+  if (!users) return;
+
+  const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
+
+  if (allTriggered) {
+      io.to(userRooms).emit("both-submit"); // 广播房间内所有人机关已触发
+      console.log(`All users in room ${userRooms} triggered the mechanism!`);
+  }
+}
 
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
+    if (!roomSubmitName[roomId]) {
+      roomSubmitName[roomId] = {};
+    }
+    roomSubmitName[roomId][friendId] = false; // 初始状态：未触发机关
+    roomSubmitName[roomId][userId] = false; // 初始状态：未触发机关
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);
     io.to(roomId).emit("joined-room", { users: [userId, friendId], roomId });
   });

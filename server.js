@@ -250,7 +250,6 @@ io.on("connection", (socket) => {
 
   // 检查房间内所有用户是否都触发机关
 function checkAllTriggered(roomId) {
-  console.log(roomId)
   const users = roomSubmitName[roomId];
   if (!users) return;
 
@@ -267,6 +266,7 @@ function checkAllTriggered(roomId) {
     if (!roomSubmitName[roomId]) {
       roomSubmitName[roomId] = {};
     }
+    console.log(roomSubmitName)
     roomSubmitName[roomId][friendId] = false; // 初始状态：未触发机关
     roomSubmitName[roomId][userId] = false; // 初始状态：未触发机关
     console.log(`用戶 ${userId} 和 ${friendId} 加入房間 ${roomId}`);

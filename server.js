@@ -4,7 +4,7 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc, addDoc, setDoc } = require("firebase/firestore");
+const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc, addDoc, setDoc, updateDoc } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
@@ -258,7 +258,7 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
 
   if (allTriggered) {
       io.to(roomId).emit("both-submit"); // 广播房间内所有人机关已触发
-      const docRef = firestoreInstance.collection("bio").doc(bio_id);
+      const docRef = doc(firestoreInstance, "bio", bio_id);
       updateDoc(docRef, {
         name:strainName
     }).then(() => {

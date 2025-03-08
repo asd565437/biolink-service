@@ -306,6 +306,7 @@ router.post('/get_all_bio', async (req, res) => {
       rotation: Math.random() * 360,
       rotationSpeed: Math.random() * 0.7,
       info: {
+        name:doc.data().name,
         keeper: doc.data().nicknames[doc.data().players[0]]+"&"+doc.data().nicknames[doc.data().players[1]] || `培養員 ${index + 1}`,
         createdAt: doc.data().createdAt || `2025-0${(index % 9) + 1}-01`,
         id: doc.data().bio_id || `${index + 1}`,

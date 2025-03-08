@@ -253,7 +253,7 @@ io.on("connection", (socket) => {
 function checkAllTriggered(roomId ,bio_id, strainName) {
   const users = roomSubmitName[roomId];
   if (!users) return;
-
+  console.log(strainName)
   const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
 
   if (allTriggered) {

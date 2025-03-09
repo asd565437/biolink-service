@@ -445,7 +445,7 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
       io.to(roomId).emit("grenarate_success", { URL, bio_id});
-
+      roomData[roomId] = {};
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};
     }
@@ -461,7 +461,6 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
     const question_ids = numbers.slice(0, 5);  // 取前5个
     if (!roomData[roomId])
       roomData[roomId] = { question_ids: generateRandomQuestions() };
-    console.log(roomData[roomId])
     if (roomData[roomId]) {
       socket.emit("question-ids", roomData[roomId].question_ids);
     }

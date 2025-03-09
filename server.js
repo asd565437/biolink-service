@@ -257,7 +257,7 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
   const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
 
   if (allTriggered) {
-      io.to(roomId).emit("both-submit"); // 广播房间内所有人机关已触发
+      io.to(roomId).emit("both-submit",strainName); // 广播房间内所有人机关已触发
       const docRef = doc(firestoreInstance, "bio", bio_id);
       updateDoc(docRef, {
         name:strainName

@@ -8,22 +8,12 @@ const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
-const fs = require("fs");
 const axios = require("axios");
 const { Midjourney } = require("midjourney");
 const app = express();
-const multer = require("multer");
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
 async function sendFilePath(filePath, fileName) {
   try {
     const response = await axios.post(
@@ -459,9 +449,12 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
       [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
-    if (!roomData[roomId])
+    if (!roomData[roomId]){
+      console.log("生成新題目：")
       roomData[roomId] = { question_ids: generateRandomQuestions() };
+    }
     if (roomData[roomId]) {
+      console.log("傳送題目："+roomData[roomId])
       socket.emit("question-ids", roomData[roomId].question_ids);
     }
   });

@@ -449,12 +449,12 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
       [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
-    if (!roomData[roomId]){
+    if (Object.keys(roomData[roomId]).length === 0){
       console.log("生成新題目：")
       roomData[roomId] = { question_ids: generateRandomQuestions() };
     }
-    if (roomData[roomId]) {
-      console.log("傳送題目："+roomData[roomId])
+    if (Object.keys(roomData[roomId]).length !== 0) {
+      console.log(roomData[roomId])
       socket.emit("question-ids", roomData[roomId].question_ids);
     }
   });

@@ -336,7 +336,8 @@ router.post('/friend', async (req, res) => {
     console.log(friendInfo)
     // 使用：
     const [start, end] = getPageRange(index);
-    const newFInfo = friendInfo.slice(start, end);
+    const sortedFriendInfo = friendInfo.sort((a, b) => a.id.localeCompare(b.id));
+    const newFInfo = sortedFriendInfo.slice(start, end);    
     console.log(newFInfo)
     res.json({ userInfo, newFInfo });
   } catch (error) {

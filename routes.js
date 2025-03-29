@@ -336,7 +336,7 @@ router.post('/friend', async (req, res) => {
 
     // 使用：
     const [start, end] = getPageRange(index);
-    let newFInfo = friendInfo.slice(start, end);
+    const newFInfo = friendInfo.slice(start, end);
     console.log(newFInfo)
     res.json({ userInfo, newFInfo });
   } catch (error) {

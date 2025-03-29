@@ -275,6 +275,7 @@ io.on("connection", (socket) => {
 
   const updateBioCount = async (users) => {
     try {
+      console.log(users)
       for (const userId of users) {
         const docRef = doc(firestoreInstance, "player", userId);
         const docSnap = await getDoc(docRef);

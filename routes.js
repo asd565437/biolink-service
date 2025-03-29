@@ -64,13 +64,13 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
 
 
-const getUsersByIds = async (userIds) => {
+const getUsersByIds = async (userIds, start, end) => {
   if (!userIds || userIds.length === 0) {
     return [];
   }
   const usersCollection = collection(firestoreInstance, "player");
   // 🔥 Firestore 限制 `where("in", [...])` 最多 10 個 ID，這裡改成 6 個
-  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(0, 6)));
+  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(start, end)));
   const usersSnap = await getDocs(usersQuery);
 
   return usersSnap.docs.map(doc => ({
@@ -275,7 +275,7 @@ router.post('/bio', async (req, res) => {
     // 使用：
     const [start, end] = getPageRange(index);
     const bios = biosSnap.docs.map(doc => doc.data()).slice(start, end);
-    res.json({ bios,count });
+    res.json({ bios, count });
   } catch (error) {
     console.error('Error fetching bios:', error);
     res.status(500).json({ error: 'Failed to fetch bios' });
@@ -320,13 +320,14 @@ router.post('/get_all_bio', async (req, res) => {
 //
 router.post('/friend', async (req, res) => {
   try {
-    const { userId,index } = req.body;
+    const { userId, index } = req.body;
     const friendIds = await getFriends(userId);
 
     if (!friendIds || friendIds.length === 0) {
       return [];
     }
-    const userInfo = await getUsersByIds(friendIds);
+    const [start, end] = getPageRange(index);
+    const userInfo = await getUsersByIds(friendIds, start, end);
     const friendInfo = await getFriendInfo(userId, friendIds);
     function getPageRange(index, pageSize = 6) {
       const start = index * pageSize;
@@ -334,12 +335,12 @@ router.post('/friend', async (req, res) => {
       return [start, end];
     }
     console.log(friendInfo)
-    // 使用：
-    const [start, end] = getPageRange(index);
+    const sortedUserInfo = userInfo.sort((a, b) => a.id.localeCompare(b.id));
     const sortedFriendInfo = friendInfo.sort((a, b) => a.id.localeCompare(b.id));
-    const newFInfo = sortedFriendInfo.slice(start, end);    
+    const newUInfo = sortedUserInfo.slice(start, end);
+    const newFInfo = sortedFriendInfo.slice(start, end);
     console.log(newFInfo)
-    res.json({ userInfo, newFInfo });
+    res.json({ newUInfo, newFInfo });
   } catch (error) {
     console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Failed to fetch friends' });

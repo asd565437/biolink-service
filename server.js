@@ -261,7 +261,7 @@ io.on("connection", (socket) => {
 
     if (allTriggered) {
       io.to(roomId).emit("both-submit", strainName); // 广播房间内所有人机关已触发
-      updateBioCount(users);
+      updateBioCount(Object.keys(users));
       const docRef = doc(firestoreInstance, "bio", bio_id);
       updateDoc(docRef, {
         name: strainName

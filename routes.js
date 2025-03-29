@@ -339,6 +339,7 @@ router.post('/friend', async (req, res) => {
     const sortedFriendInfo = friendInfo.sort((a, b) => a.id.localeCompare(b.id));
     const newUInfo = sortedUserInfo.slice(start, end);
     const newFInfo = sortedFriendInfo.slice(start, end);
+    const count = friendInfo.length;
     console.log(newFInfo)
     res.json({ newUInfo, newFInfo, count });
   } catch (error) {

@@ -348,8 +348,9 @@ router.post('/friend', async (req, res) => {
 
     // 使用：
     const [start, end] = getPageRange(index);
-    console.log(friendInfo)
+    console.log(typeof(friendInfo))
     let newFInfo = friendInfo.slice(start, end);
+    console.log(newFInfo)
     res.json({ userInfo, newFInfo });
   } catch (error) {
     console.error('Error fetching friends:', error);

@@ -45,10 +45,10 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
       if (!snapshot1.empty) {
         const data = snapshot1.docs[0].data();
-        return { id:friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id: friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else if (!snapshot2.empty) {
         const data = snapshot2.docs[0].data();
-        return { id:friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id: friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
       } else {
         return null; // 這個 friendId 不是好友
       }
@@ -78,7 +78,7 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
 const getUsersByIds = async (userIds) => {
   if (!userIds || userIds.length === 0) {
-      return [];
+    return [];
   }
   const usersCollection = collection(firestoreInstance, "player");
   // 🔥 Firestore 限制 `where("in", [...])` 最多 10 個 ID，這裡改成 6 個
@@ -86,10 +86,10 @@ const getUsersByIds = async (userIds) => {
   const usersSnap = await getDocs(usersQuery);
 
   return usersSnap.docs.map(doc => ({
-      id: doc.id,
-      nickname: doc.data().nickname, 
-      bio_count: doc.data().bio_count,
-      photoURL: doc.data().photoURL    
+    id: doc.id,
+    nickname: doc.data().nickname,
+    bio_count: doc.data().bio_count,
+    photoURL: doc.data().photoURL
   }));
 };
 
@@ -273,21 +273,21 @@ router.post('/get-friend-name', async (req, res) => {
 //
 router.post('/bio', async (req, res) => {
   try {
-    const { userId ,index } = req.body;
+    const { userId, index } = req.body;
     const biosSnap = await getDocs(
-      query(collection(firestoreInstance, 'bio'),where("players", "array-contains", userId))
+      query(collection(firestoreInstance, 'bio'), where("players", "array-contains", userId))
     );
-
+    const count = biosSnap.size;
     function getPageRange(index, pageSize = 8) {
       const start = index * pageSize;
       const end = (index + 1) * pageSize;
       return [start, end];
     }
-    
+
     // 使用：
     const [start, end] = getPageRange(index);
     const bios = biosSnap.docs.map(doc => doc.data()).slice(start, end);
-    res.json({ bios });
+    res.json({ bios,count });
   } catch (error) {
     console.error('Error fetching bios:', error);
     res.status(500).json({ error: 'Failed to fetch bios' });
@@ -296,7 +296,7 @@ router.post('/bio', async (req, res) => {
 
 router.post('/get_all_bio', async (req, res) => {
   try {
-    const { innerWidth,innerHeight } = req.body;
+    const { innerWidth, innerHeight } = req.body;
     const biosSnap = await getDocs(collection(firestoreInstance, "bio"));
     const bios = biosSnap.docs.map((doc, index) => ({
       id: doc.id,
@@ -314,8 +314,8 @@ router.post('/get_all_bio', async (req, res) => {
       rotation: Math.random() * 360,
       rotationSpeed: Math.random() * 0.7,
       info: {
-        name:doc.data().name,
-        keeper: doc.data().nicknames[doc.data().players[0]]+"&"+doc.data().nicknames[doc.data().players[1]] || `培養員 ${index + 1}`,
+        name: doc.data().name,
+        keeper: doc.data().nicknames[doc.data().players[0]] + "&" + doc.data().nicknames[doc.data().players[1]] || `培養員 ${index + 1}`,
         createdAt: doc.data().createdAt || `2025-0${(index % 9) + 1}-01`,
         id: doc.data().bio_id || `${index + 1}`,
       },
@@ -332,15 +332,24 @@ router.post('/get_all_bio', async (req, res) => {
 //
 router.post('/friend', async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId,index } = req.body;
     const friendIds = await getFriends(userId);
 
     if (!friendIds || friendIds.length === 0) {
       return [];
-  }
-  const userInfo = await getUsersByIds(friendIds);
-  const friendInfo = await getFriendInfo(userId,friendIds);
-    res.json({ userInfo,friendInfo });
+    }
+    const userInfo = await getUsersByIds(friendIds);
+    const friendInfo = await getFriendInfo(userId, friendIds);
+    function getPageRange(index, pageSize = 6) {
+      const start = index * pageSize;
+      const end = (index + 1) * pageSize;
+      return [start, end];
+    }
+
+    // 使用：
+    const [start, end] = getPageRange(index);
+    let newFInfo = friendInfo.slice(start, end);
+    res.json({ userInfo, newFInfo });
   } catch (error) {
     console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Failed to fetch friends' });

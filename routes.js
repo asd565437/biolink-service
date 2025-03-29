@@ -16,7 +16,7 @@ const getFriends = async (userId) => {
 
   const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
-  let friends = [];
+  let friends = {};
 
   snapshot1.forEach((doc) => {
     friends.push(doc.data().user2);

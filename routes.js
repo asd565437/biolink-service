@@ -333,7 +333,7 @@ router.post('/friend', async (req, res) => {
       const end = (index + 1) * pageSize;
       return [start, end];
     }
-
+    console.log(friendInfo)
     // 使用：
     const [start, end] = getPageRange(index);
     const newFInfo = friendInfo.slice(start, end);

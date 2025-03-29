@@ -16,7 +16,7 @@ const getFriends = async (userId) => {
 
   const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
-  let friends = {};
+  let friends = [];
 
   snapshot1.forEach((doc) => {
     friends.push(doc.data().user2);
@@ -33,10 +33,9 @@ const getFriendInfo = async (userId, friendIdArray) => {
   try {
     if (!friendIdArray || friendIdArray.length === 0) {
       console.log("好友 ID 陣列為空");
-      return null;
+      return [];
     }
 
-    // 🔥 建立所有查詢的 Promise
     const friendPromises = friendIdArray.map(async (friendId) => {
       const q1 = query(friendsCollection, where("user1", "==", userId), where("user2", "==", friendId));
       const q2 = query(friendsCollection, where("user1", "==", friendId), where("user2", "==", userId));
@@ -45,34 +44,23 @@ const getFriendInfo = async (userId, friendIdArray) => {
 
       if (!snapshot1.empty) {
         const data = snapshot1.docs[0].data();
-        return { id: friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id: friendId, createdAt: data.createdAt };
       } else if (!snapshot2.empty) {
         const data = snapshot2.docs[0].data();
-        return { id: friendId, createdAt: data.createdAt }; // 🔥 只回傳 `createdAt`
+        return { id: friendId, createdAt: data.createdAt };
       } else {
-        return null; // 這個 friendId 不是好友
+        return null;
       }
     });
 
-    // 等待所有查詢完成
-    const results = await Promise.all(friendPromises);
-
-    // 過濾掉 null 值（非好友的情況）
-    const friendInfo = results.filter(result => result !== null);
-
-    if (friendInfo.length > 0) {
-      console.log("好友資訊:", friendInfo);
-      return friendInfo;  // 回傳特定欄位資料
-    } else {
-      console.log("沒有找到好友關係");
-      return null;
-    }
-
+    const friendInfoArray = await Promise.all(friendPromises);
+    return friendInfoArray.filter(Boolean); // 移除 null
   } catch (error) {
-    console.error("獲取好友資訊失敗:", error);
-    return null;
+    console.error("取得好友資訊錯誤:", error);
+    return [];
   }
 };
+
 
 
 
@@ -348,7 +336,6 @@ router.post('/friend', async (req, res) => {
 
     // 使用：
     const [start, end] = getPageRange(index);
-    console.log(typeof(friendInfo))
     let newFInfo = friendInfo.slice(start, end);
     console.log(newFInfo)
     res.json({ userInfo, newFInfo });

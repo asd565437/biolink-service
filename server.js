@@ -189,6 +189,18 @@ app.get('/clear_cookie', (req, res) => {
   res.send("userAccount Cookie Cleared");
 });
 
+app.post("/data", async (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!data) return res.status(400).json({ error: "缺少 data" });
+    console.log(data);
+    return res.json({ message: "data 傳輸成功", data });
+  } catch (error) {
+    console.error("設定 Cookie 失敗:", error);
+    return res.status(500).json({ error: "伺服器錯誤" });
+  }
+});
+
 app.use("/api", routes);
 
 const server = http.createServer(app);

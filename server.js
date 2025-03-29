@@ -94,7 +94,8 @@ app.use(
       "http://localhost:3000",
       "https://biolink-service.onrender.com",
       "https://biolink-zsl3.onrender.com",
-      "https://biolink-py-server.onrender.com"
+      "https://biolink-py-server.onrender.com",
+      "https://ipad-nrh0.onrender.com/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

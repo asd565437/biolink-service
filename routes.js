@@ -340,7 +340,7 @@ router.post('/friend', async (req, res) => {
     const newUInfo = sortedUserInfo.slice(start, end);
     const newFInfo = sortedFriendInfo.slice(start, end);
     console.log(newFInfo)
-    res.json({ newUInfo, newFInfo });
+    res.json({ newUInfo, newFInfo, count });
   } catch (error) {
     console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Failed to fetch friends' });

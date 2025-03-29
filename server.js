@@ -245,33 +245,54 @@ io.on("connection", (socket) => {
   socket.on("reject_friend", ({ friendId }) => {
     io.to(users[friendId]).emit("reject_friend");
   });
-  socket.on("submit_name", ({ userId ,bio_id, strainName}) => {
+  socket.on("submit_name", ({ userId, bio_id, strainName }) => {
     const userRooms = [...socket.rooms].filter(room => room !== socket.id); // 过滤掉默认房间
     roomSubmitName[userRooms][userId] = true; // 更新用户状态
     console.log(roomSubmitName)
-    checkAllTriggered(userRooms, bio_id ,strainName);
+    checkAllTriggered(userRooms, bio_id, strainName);
   });
 
   // 检查房间内所有用户是否都触发机关
-function checkAllTriggered(roomId ,bio_id, strainName) {
-  const users = roomSubmitName[roomId];
-  if (!users) return;
-  console.log(strainName)
-  const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
+  function checkAllTriggered(roomId, bio_id, strainName) {
+    const users = roomSubmitName[roomId];
+    if (!users) return;
+    console.log(strainName)
+    const allTriggered = Object.values(users).every(status => status === true); // 所有人都触发了吗？
 
-  if (allTriggered) {
-      io.to(roomId).emit("both-submit",strainName); // 广播房间内所有人机关已触发
+    if (allTriggered) {
+      io.to(roomId).emit("both-submit", strainName); // 广播房间内所有人机关已触发
+      updateBioCount(users);
       const docRef = doc(firestoreInstance, "bio", bio_id);
       updateDoc(docRef, {
-        name:strainName
-    }).then(() => {
+        name: strainName
+      }).then(() => {
         console.log("字段已成功添加");
-    }).catch((error) => {
+      }).catch((error) => {
         console.error("更新失败:", error);
-    });
+      });
+    }
   }
-}
 
+  const updateBioCount = async (users) => {
+    try {
+      for (const userId of users) {
+        const docRef = doc(firestoreInstance, "player", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const currentBioCount = docSnap.data().bio_count || 0;
+  
+          const newBioCount = currentBioCount + 1;
+        await updateDoc(docRef, {
+          bio_count: newBioCount,
+        });
+      }
+    }
+      console.log("全部更新成功！");
+    } catch (error) {
+      console.error("更新失敗：", error);
+    }
+  };
+  
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
     if (!roomSubmitName[roomId]) {
@@ -447,7 +468,7 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
       }
 
       await setDoc(doc(firestoreInstance, "bio", bio_id), data);
-      io.to(roomId).emit("grenarate_success", { URL, bio_id});
+      io.to(roomId).emit("grenarate_success", { URL, bio_id });
       roomData[roomId] = {};
       // 清空房間答案（避免影響下一題）
       roomAnswers[roomId] = {};
@@ -462,12 +483,11 @@ function checkAllTriggered(roomId ,bio_id, strainName) {
       [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
     const question_ids = numbers.slice(0, 5);  // 取前5个
-    if(!roomData[roomId])
-    {
+    if (!roomData[roomId]) {
       console.log("製作新題目：")
       roomData[roomId] = { question_ids: generateRandomQuestions() };
     }
-    else if (Object.keys(roomData[roomId]).length === 0){
+    else if (Object.keys(roomData[roomId]).length === 0) {
       console.log("生成新題目：")
       roomData[roomId] = { question_ids: generateRandomQuestions() };
     }

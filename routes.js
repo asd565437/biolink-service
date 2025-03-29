@@ -273,12 +273,20 @@ router.post('/get-friend-name', async (req, res) => {
 //
 router.post('/bio', async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId ,index } = req.body;
     const biosSnap = await getDocs(
       query(collection(firestoreInstance, 'bio'),where("players", "array-contains", userId))
     );
 
-    const bios = biosSnap.docs.map(doc => doc.data()).slice(0, 8);
+    function getPageRange(index, pageSize = 8) {
+      const start = index * pageSize;
+      const end = (index + 1) * pageSize;
+      return [start, end];
+    }
+    
+    // 使用：
+    const [start, end] = getPageRange(index);
+    const bios = biosSnap.docs.map(doc => doc.data()).slice(start, end);
     res.json({ bios });
   } catch (error) {
     console.error('Error fetching bios:', error);

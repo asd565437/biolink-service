@@ -1,14 +1,14 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const API_URL = 'https://api.pikapikapika.io/web/generate';
-const API_TOKEN = '8d2da916-ef6d-4747-8f34-16664d759225'; // 確保你的 .env 文件中有這個 API Key
+const PIKA_API_URL = 'https://api.pikapikapika.io/web/generate';
+const PIKA_API_TOKEN = '8d2da916-ef6d-4747-8f34-16664d759225'; // 確保你的 .env 文件中有這個 API Key
 
-async function generateVideo() {
+async function generateVideo(imageURL) {
     const requestData = {
         promptText: "move it",
-        model: "Turbo",
-        image: "https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/0003.png",
+        model: "1.5",
+        image: imageURL,
         options: {
             frameRate: 24,
             parameters: {
@@ -23,11 +23,11 @@ async function generateVideo() {
 
     try {
         const response = await axios.post(
-            API_URL,
+            PIKA_API_URL,
             requestData,
             {
                 headers: {
-                    'Authorization': `Bearer ${API_TOKEN}`,
+                    'Authorization': `Bearer ${PIKA_API_TOKEN}`,
                     'Content-Type': 'application/json'
                 }
             }

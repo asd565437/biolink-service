@@ -200,6 +200,13 @@ app.post("/data", async (req, res) => {
     return res.status(500).json({ error: "伺服器錯誤" });
   }
 });
+app.get("/webhook", async (req, res) => {
+  try {
+    console.log(req.body);
+  } catch (error) {
+    console.error("設定 Cookie 失敗:", error);
+  }
+});
 
 app.use("/api", routes);
 

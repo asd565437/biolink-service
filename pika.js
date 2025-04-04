@@ -2,12 +2,12 @@ const axios = require('axios');
 require('dotenv').config();
 
 const PIKA_API_URL = 'https://api.pikapikapika.io/web/generate';
-const PIKA_API_TOKEN = '8d2da916-ef6d-4747-8f34-16664d759225'; // 確保你的 .env 文件中有這個 API Key
+const PIKA_API_TOKEN = 'cd93dac8-e90e-4f23-a6fe-f0dc2afb4b8d'; // 確保你的 .env 文件中有這個 API Key
 
 async function generateVideo(imageURL) {
     const requestData = {
         promptText: "move it",
-        model: "1.5",
+        model: "Turbo",
         image: imageURL,
         options: {
             frameRate: 24,

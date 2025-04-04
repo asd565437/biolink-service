@@ -33,11 +33,11 @@ async function generateVideo(imageURL) {
             }
         );
 
-        console.log('生成的影片 URL:', response.data.job.id);
+        console.log('生成的影片 jobID:', response.data.job.id);
     } catch (error) {
         console.error('請求失敗:', error.response ? error.response.data : error.message);
     }
 }
 
 // 測試 API 呼叫
-generateVideo();
+generateVideo("https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/0003.png");

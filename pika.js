@@ -15,7 +15,7 @@ async function generateVideo(imageURL) {
                 guidanceScale: 12,
                 motion: 1,
                 negativePrompt: "",
-                seed: null
+                seed: 52525
             },
             extend: false
         }
@@ -33,7 +33,7 @@ async function generateVideo(imageURL) {
             }
         );
 
-        console.log('生成的影片 jobID:', response.data.job.id);
+        console.log('生成的影片 jobID:', response.data);
     } catch (error) {
         console.error('請求失敗:', error.response ? error.response.data : error.message);
     }

@@ -330,7 +330,7 @@ router.post('/get_bio_info', async (req, res) => {
     }
 
     const questionData = questionSnap.data();
-    const nickName = questionData.nicknames['9999'] + " " + questionData.nicknames['9998'];
+    const nickName = questionData.nicknames['9998'] + "&" + questionData.nicknames['9999'];
     res.status(200).json({ message: '獲取成功', player: { name: questionData.name, nicknames: nickName } });
   } catch (error) {
     console.error('Error fetching question:', error);

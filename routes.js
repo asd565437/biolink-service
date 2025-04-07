@@ -289,10 +289,10 @@ router.post('/get_all_bio', async (req, res) => {
     const bios = biosSnap.docs.map((doc, index) => ({
       id: doc.id,
       src: `https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/${doc.id}.png`, // 假設你仍然使用 bio_01 ~ bio_07
-      x: Math.random() * innerWidth - innerWidth / 2,
-      y: Math.random() * innerHeight - innerHeight,
+      x: Math.random() * innerWidth,
+      y: Math.random() * innerHeight,
       z: Math.random() * (900 - 1) + 1,
-      scale: Math.random() * (0.13 - 0.05) + 0.05,
+      scale: Math.random() * (0.3 - 0.1) + 0.1,
       speedX: Math.random() * 1.5,
       speedY: Math.random() * 1.5,
       speedZ: Math.random() * 1.5,

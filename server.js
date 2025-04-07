@@ -92,6 +92,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "http://localhost:5500",
       "https://biolink-service.onrender.com",
       "https://biolink-zsl3.onrender.com",
       "https://biolink-py-server.onrender.com",

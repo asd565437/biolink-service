@@ -97,6 +97,7 @@ app.use(
       "https://biolink-py-server.onrender.com",
       "https://ipad-nrh0.onrender.com",
       "https://api.pikapikapika.io",
+      "https://biolink-nfc.netlify.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

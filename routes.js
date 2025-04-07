@@ -292,7 +292,7 @@ router.post('/get_all_bio', async (req, res) => {
       x: Math.random() * innerWidth,
       y: Math.random() * innerHeight,
       z: Math.random() * (900 - 1) + 1,
-      scale: Math.random() * (0.3 - 0.1) + 0.1,
+      scale: Math.random() * (0.25 - 0.1) + 0.1,
       speedX: Math.random() * 1.5,
       speedY: Math.random() * 1.5,
       speedZ: Math.random() * 1.5,

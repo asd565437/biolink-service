@@ -69,8 +69,7 @@ const getUsersByIds = async (userIds, start, end) => {
     return [];
   }
   const usersCollection = collection(firestoreInstance, "player");
-  // 🔥 Firestore 限制 `where("in", [...])` 最多 10 個 ID，這裡改成 6 個
-  const usersQuery = query(usersCollection, where("id", "in", userIds.slice(start, end)));
+  const usersQuery = query(usersCollection, where("id", "in", userIds));
   const usersSnap = await getDocs(usersQuery);
 
   return usersSnap.docs.map(doc => ({

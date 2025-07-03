@@ -455,7 +455,20 @@ io.on("connection", (socket) => {
         }
       };
 
-      let URL = await mid(totalCorrect);
+      const finalScore = totalCorrect / 2;
+      let URL = "";
+      if (finalScore >= 0 && finalScore < 2) {
+        URL = "https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/cool.png";
+        //Imagine = await client.Imagine("https://cdn.midjourney.com/89763f77-8a76-43da-8513-f132e71348a8/0_3.png Minimalist retro poster style. A single organic form growing inside a petri dish, abstract yet structured, resembling flowing coral, soft petals, or intricate cellular growth. Smooth, fluid textures with delicate folds and bioluminescent blue-violet hues. Avoids bacterial or viral appearance. Sharp, clean edges, no blur. Dark background for contrast. Flat colors, subtle grain, and vintage-inspired tones --sref 1152995874", (uri, progress) => { });
+      } else if (finalScore < 4) {
+        //Imagine = await client.Imagine("https://cdn.midjourney.com/d9b3fe29-2f1b-4a5a-90bc-fa7f0e82a850/0_1.png Minimalist retro poster style. A single organic form growing inside a petri dish, abstract yet structured, resembling flowing coral, soft petals, or intricate cellular growth. Smooth, fluid textures with delicate folds and bioluminescent green-violet hues. Avoids bacterial or viral appearance. Sharp, clean edges, no blur. Dark background for contrast. Flat colors, subtle grain, and vintage-inspired tones --sref 2735915676", (uri, progress) => { });
+        URL = "https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/mid.png";
+      } else {
+        //Imagine = await client.Imagine("https://cdn.midjourney.com/f446cb38-00c6-4d1f-a8cd-be2f7afdfcd4/0_1.png Minimalist retro poster style. A single organic form growing inside a petri dish, abstract yet structured, resembling flowing coral, soft petals, or intricate cellular growth. Smooth, fluid textures with delicate folds and bioluminescent red-violet hues. Avoids bacterial or viral appearance. Sharp, clean edges, no blur. Dark background for contrast. Flat colors, subtle grain, and vintage-inspired tones --sref 4248842730", (uri, progress) => { });
+        URL = "https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/hot.png";
+      }
+
+      //let URL = await mid(totalCorrect);
       console.log("Final image URL:", URL);
 
       const data = {

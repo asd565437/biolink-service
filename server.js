@@ -467,8 +467,7 @@ io.on("connection", (socket) => {
         //Imagine = await client.Imagine("https://cdn.midjourney.com/f446cb38-00c6-4d1f-a8cd-be2f7afdfcd4/0_1.png Minimalist retro poster style. A single organic form growing inside a petri dish, abstract yet structured, resembling flowing coral, soft petals, or intricate cellular growth. Smooth, fluid textures with delicate folds and bioluminescent red-violet hues. Avoids bacterial or viral appearance. Sharp, clean edges, no blur. Dark background for contrast. Flat colors, subtle grain, and vintage-inspired tones --sref 4248842730", (uri, progress) => { });
         URL = "https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/hot.png";
       }
-      const fileName = `${bio_id}`;
-      URL = await sendFilePath(URL, fileName);
+
       //let URL = await mid(totalCorrect);
       console.log("Final image URL:", URL);
 

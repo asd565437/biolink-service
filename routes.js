@@ -287,7 +287,7 @@ router.post('/get_all_bio', async (req, res) => {
     const biosSnap = await getDocs(collection(firestoreInstance, "bio"));
     const bios = biosSnap.docs.map((doc, index) => ({
       id: doc.id,
-      src: `https://biolink-pic.s3.us-east-1.amazonaws.com/midjourney/${doc.id}.png`, // 假設你仍然使用 bio_01 ~ bio_07
+      src: doc.data().imageURL, // 假設你仍然使用 bio_01 ~ bio_07
       x: Math.random() * innerWidth,
       y: Math.random() * innerHeight,
       z: Math.random() * (900 - 1) + 1,

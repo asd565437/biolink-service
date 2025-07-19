@@ -119,6 +119,7 @@ app.post("/set-cookie", async (req, res) => {
     const { account } = req.body;
     if (!account) return res.status(400).json({ error: "缺少 account 資料" });
 
+    console.log(account);
     res.cookie("userAccount", account, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,              // 無法用 JS 存取（安全）

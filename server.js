@@ -169,7 +169,7 @@ app.get("/get-cookie", async (req, res) => {
       userName: req.cookies.userName || null,
     });
   } catch (error) {
-    console.error("取得 Cookie 失敗:", error);
+    console.log("取得 Cookie 失敗:", error);
     return res.status(500).json({ error: "伺服器錯誤" });
   }
 });

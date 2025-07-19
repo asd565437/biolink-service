@@ -120,13 +120,6 @@ app.post("/set-cookie", async (req, res) => {
     if (!account) return res.status(400).json({ error: "缺少 account 資料" });
 
     console.log(account);
-    res.cookie("userAccount", account, {
-      maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true,              // 無法用 JS 存取（安全）
-      secure: true,                // ⚠️ 必須 HTTPS
-      sameSite: "None",           // 跨域 cookie 必須設為 None
-      domain: '.onrender.com',
-    });
 
     const userQuery = query(
       collection(firestoreInstance, "player"),
@@ -139,19 +132,24 @@ app.post("/set-cookie", async (req, res) => {
       const firstDoc = querySnapshot.docs[0];
       userId = firstDoc.id;
 
+      res.cookie("userAccount", account, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,              // 無法用 JS 存取（安全）
+        secure: true,                // ⚠️ 必須 HTTPS
+        sameSite: "None",           // 跨域 cookie 必須設為 None
+      });
+
       res.cookie("userId", userId, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,              // 無法用 JS 存取（安全）
         secure: true,                // ⚠️ 必須 HTTPS
         sameSite: "None",           // 跨域 cookie 必須設為 None
-        domain: '.onrender.com',
       });
       res.cookie("userName", firstDoc.data().nickname, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,              // 無法用 JS 存取（安全）
         secure: true,                // ⚠️ 必須 HTTPS
         sameSite: "None",           // 跨域 cookie 必須設為 None
-        domain: '.onrender.com',
       });
     }
 

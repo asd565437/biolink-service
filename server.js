@@ -124,6 +124,7 @@ app.post("/set-cookie", async (req, res) => {
       httpOnly: true,              // 無法用 JS 存取（安全）
       secure: true,                // ⚠️ 必須 HTTPS
       sameSite: "None",           // 跨域 cookie 必須設為 None
+      domain: '.onrender.com',
     });
 
     const userQuery = query(
@@ -142,12 +143,14 @@ app.post("/set-cookie", async (req, res) => {
         httpOnly: true,              // 無法用 JS 存取（安全）
         secure: true,                // ⚠️ 必須 HTTPS
         sameSite: "None",           // 跨域 cookie 必須設為 None
+        domain: '.onrender.com',
       });
       res.cookie("userName", firstDoc.data().nickname, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,              // 無法用 JS 存取（安全）
         secure: true,                // ⚠️ 必須 HTTPS
         sameSite: "None",           // 跨域 cookie 必須設為 None
+        domain: '.onrender.com',
       });
     }
 

@@ -4,13 +4,14 @@ const routes = require("./routes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc, addDoc, setDoc, updateDoc,getDoc } = require("firebase/firestore");
+const { getDocs, getCountFromServer, collection, query, where, getFirestore, doc, addDoc, setDoc, updateDoc, getDoc } = require("firebase/firestore");
 const { firebaseConfig } = require("./firebase.js");
 const { initializeApp } = require("firebase/app");
 const crypto = require("crypto");
 const axios = require("axios");
 const { Midjourney } = require("midjourney");
 const app = express();
+const jwt = require("jsonwebtoken");
 const firestoreApp = initializeApp(firebaseConfig);
 const firestoreInstance = getFirestore(firestoreApp);
 
@@ -114,6 +115,22 @@ app.options("*", (req, res) => {
   res.sendStatus(204);
 });
 
+function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "未授權" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Token 無效或過期" });
+  }
+}
+
 app.post("/set-cookie", async (req, res) => {
   try {
     const { account } = req.body;
@@ -132,24 +149,21 @@ app.post("/set-cookie", async (req, res) => {
       const firstDoc = querySnapshot.docs[0];
       userId = firstDoc.id;
 
-      res.cookie("userAccount", account, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,              // 無法用 JS 存取（安全）
-        secure: true,                // ⚠️ 必須 HTTPS
-        sameSite: "None",           // 跨域 cookie 必須設為 None
+      const payload = {
+        userAccount: account,
+        userId: userId,
+        userName: firstDoc.data().nickname,
+      };
+
+      // 建議放在 .env
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "1d", // 或 "24h"
       });
 
-      res.cookie("userId", userId, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,              // 無法用 JS 存取（安全）
-        secure: true,                // ⚠️ 必須 HTTPS
-        sameSite: "None",           // 跨域 cookie 必須設為 None
-      });
-      res.cookie("userName", firstDoc.data().nickname, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,              // 無法用 JS 存取（安全）
-        secure: true,                // ⚠️ 必須 HTTPS
-        sameSite: "None",           // 跨域 cookie 必須設為 None
+      // 回傳給前端，前端自己儲存
+      res.json({
+        message: "登入成功",
+        token,
       });
     }
 
@@ -160,20 +174,9 @@ app.post("/set-cookie", async (req, res) => {
   }
 });
 
-app.get("/get-cookie", async (req, res) => {
-  console.log(req.cookies.userAccount)
-  console.log(req.cookies.userId)
-  console.log(req.cookies.userName)
-  try {
-    return res.json({
-      account: req.cookies.userAccount || null,
-      id: req.cookies.userId || null,
-      userName: req.cookies.userName || null,
-    });
-  } catch (error) {
-    console.log("取得 Cookie 失敗:", error);
-    return res.status(500).json({ error: "伺服器錯誤" });
-  }
+app.get("/get-cookie", verifyToken, (req, res) => {
+  const { account, userId, userName } = req.user;
+  res.json({ account, userId, userName });
 });
 app.get("/check_auth", (req, res) => {
   if (req.cookies.userAccount) {
@@ -289,19 +292,19 @@ io.on("connection", (socket) => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const currentBioCount = docSnap.data().bio_count || 0;
-  
+
           const newBioCount = currentBioCount + 1;
-        await updateDoc(docRef, {
-          bio_count: newBioCount,
-        });
+          await updateDoc(docRef, {
+            bio_count: newBioCount,
+          });
+        }
       }
-    }
       console.log("全部更新成功！");
     } catch (error) {
       console.error("更新失敗：", error);
     }
   };
-  
+
   socket.on("accept-invite", ({ friendId, roomId, userId }) => {
     socket.join(roomId);
     if (!roomSubmitName[roomId]) {

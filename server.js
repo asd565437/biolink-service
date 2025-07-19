@@ -174,13 +174,11 @@ app.post("/set-cookie", async (req, res) => {
 
 app.get("/get-cookie", verifyToken, (req, res) => {
   const { userAccount, userId, userName } = req.user;
-  console.log(userAccount);
-  console.log(userId);
-  console.log(userName);
   res.json({ userAccount, userId, userName });
 });
-app.get("/check_auth", (req, res) => {
-  if (req.cookies.userAccount) {
+app.get("/check_auth", verifyToken, (req, res) => {
+  const { userAccount, userId, userName } = req.user;
+  if (userAccount) {
     res.json({ isAuthenticated: true });
   } else {
     res.json({ isAuthenticated: false });

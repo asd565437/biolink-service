@@ -121,9 +121,9 @@ app.post("/set-cookie", async (req, res) => {
 
     res.cookie("userAccount", account, {
       maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      sameSite: "None",
     });
 
     const userQuery = query(

@@ -163,6 +163,9 @@ app.post("/set-cookie", async (req, res) => {
 });
 
 app.get("/get-cookie", async (req, res) => {
+  console.log(req.cookies.userAccount)
+  console.log(req.cookies.userId)
+  console.log(req.cookies.userName)
   try {
     return res.json({
       account: req.cookies.userAccount || null,

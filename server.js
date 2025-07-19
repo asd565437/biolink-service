@@ -166,8 +166,6 @@ app.post("/set-cookie", async (req, res) => {
         token,
       });
     }
-
-    return res.json({ message: "Cookie 設定成功", account, userId });
   } catch (error) {
     console.error("設定 Cookie 失敗:", error);
     return res.status(500).json({ error: "伺服器錯誤" });

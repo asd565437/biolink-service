@@ -121,9 +121,9 @@ app.post("/set-cookie", async (req, res) => {
 
     res.cookie("userAccount", account, {
       maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      httpOnly: true,              // 無法用 JS 存取（安全）
+      secure: true,                // ⚠️ 必須 HTTPS
+      sameSite: "None",           // 跨域 cookie 必須設為 None
     });
 
     const userQuery = query(
@@ -139,15 +139,15 @@ app.post("/set-cookie", async (req, res) => {
 
       res.cookie("userId", userId, {
         maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        httpOnly: true,              // 無法用 JS 存取（安全）
+        secure: true,                // ⚠️ 必須 HTTPS
+        sameSite: "None",           // 跨域 cookie 必須設為 None
       });
       res.cookie("userName", firstDoc.data().nickname, {
         maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        httpOnly: true,              // 無法用 JS 存取（安全）
+        secure: true,                // ⚠️ 必須 HTTPS
+        sameSite: "None",           // 跨域 cookie 必須設為 None
       });
     }
 
